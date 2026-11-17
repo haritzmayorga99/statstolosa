@@ -8,7 +8,7 @@ window.CONFIG = {
   // URL de la Web App de Apps Script (termina en /exec). Necesaria para
   // REGISTRAR y BORRAR lanzamientos. Ver README.md → "Paso 2".
   // Si se deja vacía, la app funciona en modo solo lectura.
-  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwQme_73vGLaNlU6tVSoggODFU4kkYVRliGDwX_LiiVZdeimtoqAihi8-VVC2NOCp-r/exec",
+  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbz8Ju9FNkTk8QXyz6TzLYn-_DjZWGBH8-azPxn341WjbiXbF9nNVjdwy-jxY3G95u9d/exec",
 
   // Nombres de las pestañas del Sheets.
   SHEET_TIROS: "LIMPIO",
