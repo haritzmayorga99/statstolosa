@@ -91,6 +91,16 @@ function toSheetRow(r) {
 // ================================================================
 // Estado
 // ================================================================
+// Registro: dos equipos fijos (a, b) y el titular ("a" o "b").
+// El titular se escribe primero en el Sheets (columna EQUIPO) y es el que tiene la plantilla activa.
+function migrateReg(o) {
+  return { a: o.a ?? o.equipo ?? "", b: o.b ?? o.contrario ?? "", titular: o.titular === "b" ? "b" : "a" };
+}
+function regTeams() {
+  const r = state.reg;
+  return r.titular === "b" ? { equipo: r.b, contrario: r.a } : { equipo: r.a, contrario: r.b };
+}
+
 const state = {
   rows: [],                 // filas confirmadas en el Sheets
   roster: new Map(),        // equipo -> [{numero, nombre}]
@@ -101,7 +111,7 @@ const state = {
   error: "",
   tab: store.get("bm_tab", "registrar"),
   sel: { player: null, zona: "", destino: "", accion: "", resultado: "" },
-  reg: store.get("bm_reg", { equipo: "", contrario: "" }),
+  reg: migrateReg(store.get("bm_reg", {})),
   filters: { equipo: "", contrario: "", jugador: "", accion: "", zona: "" },
   sort: { key: "t", asc: false },
   destMode: "pct",
@@ -228,10 +238,11 @@ setInterval(() => { if (state.queue.length) flushQueue(false); }, 30000);
 
 function addShot(resultado) {
   const { player, zona, destino, accion } = state.sel;
+  const { equipo, contrario } = regTeams();
   const row = {
     id: uid(),
-    equipo: state.reg.equipo, numero: player.numero, jugador: player.nombre,
-    contrario: state.reg.contrario, zona, destino, accion, resultado,
+    equipo, numero: player.numero, jugador: player.nombre,
+    contrario, zona, destino, accion, resultado,
     altura: ALTURA[destino] || "", lado: LADO[destino] || "",
   };
   state.queue.push({ op: "add", row });
@@ -505,14 +516,17 @@ function goalBandsSVG({ parts, counts, vertical, id }) {
 // ================================================================
 function renderRegistrar() {
   const teams = allTeams();
-  if (!state.reg.equipo || !teams.includes(state.reg.equipo)) state.reg.equipo = teams[0] || "";
-  if (!state.reg.contrario || !teams.includes(state.reg.contrario)) state.reg.contrario = teams.find((t) => t !== state.reg.equipo) || "";
+  if (!teams.includes(state.reg.a)) state.reg.a = teams[0] || "";
+  if (!teams.includes(state.reg.b) || state.reg.b === state.reg.a) state.reg.b = teams.find((t) => t !== state.reg.a) || "";
   const opt = (v) => teams.map((t) => `<option ${t === v ? "selected" : ""}>${esc(t)}</option>`).join("");
-  $("#regEquipo").innerHTML = opt(state.reg.equipo);
-  $("#regContrario").innerHTML = opt(state.reg.contrario);
+  $("#regA").innerHTML = opt(state.reg.a);
+  $("#regB").innerHTML = opt(state.reg.b);
+  $("#titA").checked = state.reg.titular === "a";
+  $("#titB").checked = state.reg.titular === "b";
+  const { equipo, contrario } = regTeams();
 
-  // Jugadores
-  const roster = state.roster.get(state.reg.equipo) || [];
+  // Jugadores (del titular)
+  const roster = state.roster.get(equipo) || [];
   const extra = state.sel.player && !roster.some((p) => p.numero === state.sel.player.numero) ? [state.sel.player] : [];
   const tiles = [...roster, ...extra].map((p) => {
     const on = state.sel.player && state.sel.player.numero === p.numero;
@@ -548,7 +562,7 @@ function renderRegistrar() {
   $("#regHint").className = "save-hint" + (falta.length ? "" : " ok");
 
   // Marcador y últimos tiros del partido seleccionado
-  const match = viewRows().filter((r) => r.equipo === state.reg.equipo && r.contrario === state.reg.contrario);
+  const match = viewRows().filter((r) => r.equipo === equipo && r.contrario === contrario);
   const cnt = (res) => match.filter((r) => r.resultado === res).length;
   $("#regScore").innerHTML = match.length
     ? `<span><b>${match.length}</b> tiros</span><i class="dot"></i><span><b>${cnt("GOL")}</b> goles</span><i class="dot"></i><span><b>${cnt("PARADA")}</b> paradas</span><i class="dot"></i><span><b>${cnt("FUERA")}</b> fuera</span>`
@@ -561,22 +575,32 @@ function renderRegistrar() {
 }
 
 function bindRegistrar() {
-  $("#regEquipo").onchange = (e) => {
-    state.reg.equipo = e.target.value; state.sel.player = null;
-    if (state.reg.contrario === state.reg.equipo) state.reg.contrario = "";
+  const setTeam = (slot) => (e) => {
+    state.reg[slot] = e.target.value;
+    const other = slot === "a" ? "b" : "a";
+    if (state.reg[other] === state.reg[slot]) state.reg[other] = "";
+    state.sel.player = null;
     store.set("bm_reg", state.reg); renderRegistrar();
   };
-  $("#regContrario").onchange = (e) => { state.reg.contrario = e.target.value; store.set("bm_reg", state.reg); renderRegistrar(); };
+  $("#regA").onchange = setTeam("a");
+  $("#regB").onchange = setTeam("b");
+  const setTitular = (t) => () => {
+    if (state.reg.titular === t) return;
+    state.reg.titular = t; state.sel.player = null;   // cambia la plantilla; el resto del tiro se conserva
+    store.set("bm_reg", state.reg); renderRegistrar();
+  };
+  $("#titA").onchange = setTitular("a");
+  $("#titB").onchange = setTitular("b");
   $("#regPlayers").onclick = async (e) => {
     const b = e.target.closest(".ptile"); if (!b) return;
     if (b.dataset.num === "+") {
       const n = await modal({ title: "Otro jugador", text: "Dorsal del jugador:", input: { inputmode: "numeric", placeholder: "Ej. 33" } });
       if (!n) return;
       const numero = numStr(n);
-      state.sel.player = { numero, nombre: nameOf(state.reg.equipo, numero) };
+      state.sel.player = { numero, nombre: nameOf(regTeams().equipo, numero) };
     } else {
       const numero = b.dataset.num;
-      const p = (state.roster.get(state.reg.equipo) || []).find((x) => x.numero === numero) || state.sel.player;
+      const p = (state.roster.get(regTeams().equipo) || []).find((x) => x.numero === numero) || state.sel.player;
       state.sel.player = state.sel.player?.numero === numero ? null : { numero, nombre: p?.nombre || "" };
     }
     renderRegistrar();
@@ -599,7 +623,8 @@ function bindRegistrar() {
   }));
   $("#regSave").onclick = () => {
     if (READ_ONLY) { toast("Modo solo lectura: falta configurar SCRIPT_URL (ver README)"); return; }
-    if (!state.reg.equipo || !state.reg.contrario) { toast("Elige equipo y contrario"); return; }
+    const { equipo, contrario } = regTeams();
+    if (!equipo || !contrario) { toast("Elige equipo y contrario"); return; }
     const s = state.sel;
     if (!(s.player && s.zona && s.destino && s.accion && s.resultado)) return;
     const row = addShot(s.resultado);
@@ -763,7 +788,7 @@ function renderStats() {
 
   if (!rows.length) {
     const empty = `<div class="empty-state">${state.loaded ? "No hay tiros con estos filtros" : "Cargando…"}</div>`;
-    $("#playerTable").innerHTML = `<tbody><tr><td>${empty}</td></tr></tbody>`;
+    ["#playerTable", "#trendPlayerTable"].forEach((s) => ($(s).innerHTML = `<tbody><tr><td>${empty}</td></tr></tbody>`));
     ["#donutZona", "#donutJugador", "#accionBars"].forEach((s) => ($(s).innerHTML = empty));
     return;
   }
@@ -781,9 +806,11 @@ function renderStats() {
   });
   const showTeam = !state.filters.equipo;
   const cols = [["nombre", "Jugador"], ["numero", "Nº"], ...(showTeam ? [["equipo", "Equipo"]] : []), ["t", "Tiros"], ["g", "Gol"], ["p", "Par."], ["f", "Fue."], ["ef", "% Ef"]];
-  $("#playerTable").innerHTML = `<thead><tr>${cols.map(([k, l]) => `<th data-sort="${k}" class="${k === "p" || k === "f" ? "hide-sm " : ""}${k === key ? "sorted" + (asc ? " asc" : "") : ""}">${l}</th>`).join("")}</tr></thead><tbody>${
+  const tableHTML = `<thead><tr>${cols.map(([k, l]) => `<th data-sort="${k}" class="${k === "p" || k === "f" ? "hide-sm " : ""}${k === key ? "sorted" + (asc ? " asc" : "") : ""}">${l}</th>`).join("")}</tr></thead><tbody>${
     players.map((p) => `<tr data-key="${esc(p.key)}" data-eq="${esc(p.equipo)}"><td class="name" title="${esc(p.nombre)}">${esc(p.nombre)}</td><td>${esc(p.numero)}</td>${showTeam ? `<td class="team">${esc(p.equipo)}</td>` : ""}<td><b>${p.t}</b></td><td>${p.g}</td><td class="hide-sm">${p.p}</td><td class="hide-sm">${p.f}</td>
       <td><div class="efbar"><i><b style="width:${(p.ef * 100).toFixed(0)}%;background:${efColor(p.ef)}"></b></i><span>${(p.ef * 100).toFixed(0)}%</span></div></td></tr>`).join("")}</tbody>`;
+  $("#playerTable").innerHTML = tableHTML;
+  $("#trendPlayerTable").innerHTML = tableHTML;
 
   // Donut zonas
   const zonas = [...groupBy(rows, (r) => r.zona || "—").entries()].map(([z, rs]) => ({ label: z, n: rs.length })).sort((a, b) => b.n - a.n);
@@ -810,20 +837,22 @@ function renderStats() {
 }
 
 function bindStats() {
-  $("#playerTable").onclick = (e) => {
-    const th = e.target.closest("th[data-sort]");
-    if (th) {
-      const k = th.dataset.sort;
-      state.sort = state.sort.key === k ? { key: k, asc: !state.sort.asc } : { key: k, asc: ["nombre", "numero", "equipo"].includes(k) };
-      renderStats(); return;
-    }
-    const tr = e.target.closest("tr[data-key]");
-    if (tr) {
-      state.filters.equipo = tr.dataset.eq;
-      state.filters.jugador = state.filters.jugador === tr.dataset.key ? "" : tr.dataset.key;
-      renderAnalysis();
-    }
-  };
+  ["#playerTable", "#trendPlayerTable"].forEach((s) => ($(s).onclick = playerTableClick));
+}
+
+function playerTableClick(e) {
+  const th = e.target.closest("th[data-sort]");
+  if (th) {
+    const k = th.dataset.sort;
+    state.sort = state.sort.key === k ? { key: k, asc: !state.sort.asc } : { key: k, asc: ["nombre", "numero", "equipo"].includes(k) };
+    renderStats(); return;
+  }
+  const tr = e.target.closest("tr[data-key]");
+  if (tr) {
+    state.filters.equipo = tr.dataset.eq;
+    state.filters.jugador = state.filters.jugador === tr.dataset.key ? "" : tr.dataset.key;
+    renderAnalysis();
+  }
 }
 
 // ================================================================

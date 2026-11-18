@@ -35,8 +35,14 @@
     <!-- ============ REGISTRAR ============ -->
     <section id="tab-registrar" class="tab active">
       <div class="reg-teams">
-        <label class="sel"><span>Equipo</span><select id="regEquipo"></select></label>
-        <label class="sel"><span>Contrario</span><select id="regContrario"></select></label>
+        <div class="team-pick">
+          <input type="radio" name="titular" id="titA" title="Titular: sus jugadores salen en la lista y va primero en el Sheets">
+          <label class="sel"><span>Equipo A</span><select id="regA"></select></label>
+        </div>
+        <div class="team-pick">
+          <input type="radio" name="titular" id="titB" title="Titular: sus jugadores salen en la lista y va primero en el Sheets">
+          <label class="sel"><span>Equipo B</span><select id="regB"></select></label>
+        </div>
       </div>
       <div class="reg-score" id="regScore"></div>
 
@@ -117,6 +123,12 @@
     <section id="tab-tendencias" class="tab">
       <div class="filters" data-filters></div>
       <div class="grid2">
+        <div class="card span2">
+          <h3>Jugadores</h3>
+          <div class="table-wrap tall">
+            <table class="ptable" id="trendPlayerTable"></table>
+          </div>
+        </div>
         <div class="card">
           <h3>Pista por zona <small>goles / tiros · toca una zona para filtrar</small></h3>
           <div class="court-wrap" id="trendCourt"></div>
