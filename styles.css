@@ -550,3 +550,21 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
 .team-pick { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .team-pick .sel { flex: 1; min-width: 0; }
 .team-pick input[type="radio"] { width: 22px; height: 22px; flex: none; accent-color: var(--accent); cursor: pointer; margin: 0; }
+
+/* ---------- Registrar en móvil (< 900 px): jugadores a la izquierda, pista a la derecha, acciones debajo ---------- */
+@media (max-width: 899px) {
+  .reg-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-areas: "players field" "actions actions";
+    align-items: stretch; gap: 10px;
+  }
+  .players {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px; align-self: stretch; align-content: start;
+    min-height: 0; overflow-y: auto; max-height: 100%;
+  }
+  .ptile { min-height: 64px; }
+  .field { max-width: none; justify-self: stretch; width: 100%; }
+  .field .goal-wrap { padding: 10px 8% 0; }
+  .actions { max-width: none; margin: 0; width: 100%; }
+}
