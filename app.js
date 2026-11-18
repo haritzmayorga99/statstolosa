@@ -100,7 +100,7 @@ const state = {
   inFlight: [],             // operaciones que se están enviando ahora mismo
   error: "",
   tab: store.get("bm_tab", "registrar"),
-  sel: { player: null, zona: "", destino: "", accion: "" },
+  sel: { player: null, zona: "", destino: "", accion: "", resultado: "" },
   reg: store.get("bm_reg", { equipo: "", contrario: "" }),
   filters: { equipo: "", contrario: "", jugador: "", accion: "", zona: "" },
   sort: { key: "t", asc: false },
@@ -534,9 +534,18 @@ function renderRegistrar() {
     chip(s.player, s.player ? `#${s.player.numero} ${shortName(s.player.nombre)}` : "", "① Jugador") +
     chip(s.zona, s.zona, "② Zona") +
     chip(s.destino, s.destino === "10" ? "Fuera portería" : "Destino " + s.destino, "③ Destino") +
-    chip(s.accion, s.accion, "④ Acción");
+    chip(s.accion, s.accion, "④ Acción") +
+    chip(s.resultado, s.resultado, "⑤ Resultado");
   const ready = s.player && s.zona && s.destino && s.accion;
-  $$(".res").forEach((b) => (b.disabled = !ready));
+  $$(".res").forEach((b) => {
+    b.disabled = !ready;
+    b.classList.toggle("sel", s.resultado === b.dataset.res);
+  });
+  const falta = [!s.player && "jugador", !s.zona && "zona", !s.destino && "destino", !s.accion && "acción", !s.resultado && "resultado"].filter(Boolean);
+  const saveBtn = $("#regSave");
+  saveBtn.disabled = !(ready && s.resultado);
+  $("#regHint").textContent = falta.length ? "Falta: " + falta.join(", ") : "Listo para guardar";
+  $("#regHint").className = "save-hint" + (falta.length ? "" : " ok");
 
   // Marcador y últimos tiros del partido seleccionado
   const match = viewRows().filter((r) => r.equipo === state.reg.equipo && r.contrario === state.reg.contrario);
@@ -585,15 +594,21 @@ function bindRegistrar() {
     state.sel.accion = state.sel.accion === t.dataset.acc ? "" : t.dataset.acc; renderRegistrar();
   };
   $$(".res").forEach((b) => (b.onclick = () => {
+    state.sel.resultado = state.sel.resultado === b.dataset.res ? "" : b.dataset.res;
+    renderRegistrar();
+  }));
+  $("#regSave").onclick = () => {
     if (READ_ONLY) { toast("Modo solo lectura: falta configurar SCRIPT_URL (ver README)"); return; }
     if (!state.reg.equipo || !state.reg.contrario) { toast("Elige equipo y contrario"); return; }
-    const row = addShot(b.dataset.res);
-    state.sel = { player: null, zona: "", destino: "", accion: "" };
+    const s = state.sel;
+    if (!(s.player && s.zona && s.destino && s.accion && s.resultado)) return;
+    const row = addShot(s.resultado);
+    state.sel = { player: null, zona: "", destino: "", accion: "", resultado: "" };
     if (navigator.vibrate) navigator.vibrate(30);
     renderAll();
     toast(`✓ ${row.resultado} · #${row.numero} ${shortName(row.jugador)} · ${row.zona} → ${row.destino}`, { label: "Deshacer", fn: () => deleteShot(row.id) });
     flushQueue();
-  }));
+  };
 }
 
 // ================================================================
@@ -861,6 +876,7 @@ function renderAll() {
 function showTab(tab) {
   if (!$("#tab-" + tab)) tab = "registrar";
   state.tab = tab; store.set("bm_tab", tab);
+  document.body.dataset.theme = (tab === "registrar" || tab === "historial") ? "light" : "dark";
   $$(".tab").forEach((s) => s.classList.toggle("active", s.id === "tab-" + tab));
   $$("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
   window.scrollTo({ top: 0 });
