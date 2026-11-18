@@ -81,10 +81,10 @@ select, input { font: inherit; color: inherit; }
 }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .brand-logo {
-  width: 38px; height: 38px; border-radius: 50%;
-  display: grid; place-items: center;
-  background: var(--logo-bg); color: var(--logo-fg);
-  font: 900 20px/1 var(--display);
+  width: 40px; height: 40px; flex: none;
+  background-color: var(--text);
+  -webkit-mask: url("assets/logo.png") center / contain no-repeat;
+          mask: url("assets/logo.png") center / contain no-repeat;
 }
 .brand-text { font: 800 18px/1.1 var(--display); letter-spacing: -.2px; white-space: nowrap; }
 .brand-text span { color: var(--accent); }
