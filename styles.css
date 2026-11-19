@@ -702,3 +702,17 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
   body:has(#tab-registrar.active) .topbar .brand,
   body:has(#tab-registrar.active) .topbar .sync { display: none; }
 }
+
+/* Registro en móvil: tipo de lanzamiento arriba y resultados debajo; pista un poco más grande */
+@media (max-width: 899px) {
+  .reg-grid {
+    grid-template-areas: "players field" "actions actions" "results results";
+  }
+  .court-wrap svg { max-height: 330px; }
+}
+
+/* Pista más grande: columna de jugadores algo más estrecha */
+@media (max-width: 899px) {
+  .reg-grid { grid-template-columns: minmax(0, 1.6fr) minmax(0, 3fr); }
+  .court-wrap svg { max-height: none; }
+}

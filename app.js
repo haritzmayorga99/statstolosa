@@ -573,7 +573,7 @@ function renderRegistrar() {
   const cnt = (res) => match.filter((r) => r.resultado === res).length;
   $("#regScore").innerHTML = match.length
     ? `<span><b>${match.length}</b> tiros</span><i class="dot"></i><span><b>${cnt("GOL")}</b> goles</span><i class="dot"></i><span><b>${cnt("PARADA")}</b> paradas</span><i class="dot"></i><span><b>${cnt("FUERA")}</b> fuera</span>`
-    : `<span>Sin tiros registrados en este partido</span>`;
+    : ``;
   const recent = match.slice(-5).reverse();
   $("#regRecent").innerHTML = recent.length
     ? `<div class="ttl">Últimos tiros</div>` + recent.map((r) =>
