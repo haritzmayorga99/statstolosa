@@ -600,3 +600,13 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
 .trend-list { max-height: 420px; overflow-y: auto; overscroll-behavior: contain; }
 .trend-list th { position: sticky; top: 0; z-index: 1; }
 .trend-list td:nth-child(5) { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Tendencias en móvil: sin listado de jugadores; orden destino → zona → porterías → lanzamientos */
+@media (max-width: 899px) {
+  .trend-players { display: none !important; }
+  .trend-destino { order: 1; }
+  .trend-zona { order: 2; }
+  .trend-altura { order: 3; }
+  .trend-lado { order: 4; }
+  .trend-list-card { order: 5; }
+}
