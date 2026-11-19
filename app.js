@@ -621,6 +621,20 @@ function bindRegistrar() {
     state.sel.resultado = state.sel.resultado === b.dataset.res ? "" : b.dataset.res;
     renderRegistrar();
   }));
+  // Atajos de teclado (PC): T titular · G/P/F resultado · Enter guardar
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target.closest && e.target.closest("input, select, textarea")) return;
+    if (!document.querySelector("#tab-registrar.active")) return;
+    const k = e.key.toLowerCase();
+    if (k === "t") $(state.reg.titular === "a" ? "#titB" : "#titA").click();
+    else if (k === "g") $(".res.gol").click();
+    else if (k === "p") $(".res.parada").click();
+    else if (k === "f") $(".res.fuera").click();
+    else if (e.key === "Enter") { const b = $("#regSave"); if (!b.disabled) b.click(); }
+    else return;
+    e.preventDefault();
+  });
   $("#regSave").onclick = () => {
     if (READ_ONLY) { toast("Modo solo lectura: falta configurar SCRIPT_URL (ver README)"); return; }
     const { equipo, contrario } = regTeams();
@@ -873,6 +887,16 @@ function renderTendencias() {
     `<div class="goal-total">Total: ${rows.length}${out10 ? ` · fuera de portería (10): ${out10}` : ""}</div>`;
   $$("#destMode button").forEach((b) => b.classList.toggle("active", b.dataset.mode === state.destMode));
 
+  // Listado detallado de lanzamientos que cumplen los filtros (más reciente arriba)
+  const listRows = rows.map((r, i) => ({ r, n: i + 1 })).reverse();
+  $("#trendListTitle").textContent = `Lanzamientos (${rows.length})`;
+  $("#trendList tbody").innerHTML = listRows.map(({ r, n }) => `
+    <tr class="${r.pending ? "pending" : ""}">
+      <td>${n}</td><td>${esc(r.equipo)}</td><td>${esc(r.contrario)}</td><td>${esc(r.numero)}</td>
+      <td title="${esc(playerName(r))}">${esc(playerName(r))}</td><td>${esc(r.zona)}</td><td>${esc(r.destino)}</td>
+      <td>${esc(r.accion)}</td><td><span class="badge ${esc(r.resultado)}">${esc(r.resultado)}</span></td>
+    </tr>`).join("") || `<tr><td colspan="9" class="empty-state">Sin lanzamientos con estos filtros</td></tr>`;
+
   const fuera = rows.filter((r) => r.resultado === "FUERA").length;
   const by = (field) => { const o = {}; for (const [k, rs] of groupBy(rows, (r) => r[field])) { const c = count(rs); o[k] = { g: c.g, t: c.t }; } return o; };
   const head = `<div class="goal-head">Tiros fuera <span>${fuera}</span></div>`;
@@ -905,7 +929,7 @@ function renderAll() {
 function showTab(tab) {
   if (!$("#tab-" + tab)) tab = "registrar";
   state.tab = tab; store.set("bm_tab", tab);
-  document.body.dataset.theme = (tab === "registrar" || tab === "historial") ? "light" : "dark";
+  document.body.dataset.theme = "dark";
   $$(".tab").forEach((s) => s.classList.toggle("active", s.id === "tab-" + tab));
   $$("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
   window.scrollTo({ top: 0 });

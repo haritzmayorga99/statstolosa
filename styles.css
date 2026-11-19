@@ -225,6 +225,20 @@ main { max-width: 1200px; margin: 0 auto; padding: 14px 14px 24px; }
 .players { grid-area: players; }
 .field { grid-area: field; }
 .actions { grid-area: actions; }
+.results { grid-area: results; padding: 14px 16px; }
+.results .result-grid { margin: 0; }
+.titular-badge {
+  display: none; flex: none; padding: 4px 9px; border-radius: 99px;
+  font: 800 11px var(--display); letter-spacing: .6px; text-transform: uppercase;
+  background: var(--accent); color: #fff;
+}
+.team-pick input[type="radio"]:checked ~ .titular-badge { display: inline-block; }
+.team-pick:has(input:checked) .sel { box-shadow: inset 0 0 0 2px var(--accent); border-radius: 14px; }
+.kbd-help { display: none; margin: 0; font-size: 12px; color: var(--muted); }
+.kbd-help kbd {
+  font: 700 11px var(--display); padding: 1px 6px; border-radius: 6px;
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+}
 
 /* Móvil: jugadores en cuadrícula de 4 columnas, sin panel de fondo */
 .players {
@@ -317,7 +331,7 @@ body[data-theme="light"] .acc.amago.sel { background: #4f46e5; color: #fff; }
   position: fixed; left: 0; right: 0;
   bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
   z-index: 25; padding: 12px 14px 10px;
-  background: linear-gradient(to top, var(--bg) 70%, rgba(241,245,249,0));
+  background: var(--bg); box-shadow: 0 -8px 18px -8px rgba(0,0,0,.5);
   display: flex; flex-direction: column; gap: 6px;
   pointer-events: none;
 }
@@ -529,9 +543,10 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
   .reg-score { justify-content: flex-start; max-width: 760px; }
   .reg-grid {
     grid-template-columns: 250px minmax(0, 1fr) 320px;
-    grid-template-areas: "players field actions";
+    grid-template-areas: "players field results" "players field actions";
     align-items: start;
   }
+  .kbd-help { display: block; }
   .players {
     display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
     background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow);
@@ -555,9 +570,20 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
 @media (max-width: 899px) {
   .reg-grid {
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-    grid-template-areas: "players field" "actions actions";
+    grid-template-areas: "players field" "results results" "actions actions";
     align-items: stretch; gap: 10px;
   }
+  .results { padding: 10px; }
+  .results .result-grid { gap: 8px; }
+  .res { min-height: 56px; font-size: 16px; padding: 10px 4px; }
+  .ptile .name { display: none; }
+  .ptile { min-height: 58px; justify-content: center; }
+  .team-pick input[type="radio"] { width: 26px; height: 26px; }
+  .team-pick .sel { padding: 8px 12px; }
+  .titular-badge { display: none !important; }
+  .save-bar { flex-direction: row; align-items: center; gap: 10px; padding: 10px 12px; }
+  .save-hint { flex: 1; font-size: 12px; text-align: left; line-height: 1.25; }
+  .save-btn { width: auto; flex: 1.4; min-height: 52px; font-size: 14px; }
   .players {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px; align-self: stretch; align-content: start;
@@ -568,3 +594,9 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
   .field .goal-wrap { padding: 10px 8% 0; }
   .actions { max-width: none; margin: 0; width: 100%; }
 }
+
+/* Listado de lanzamientos en Tendencias: scroll propio con la rueda del ratón */
+.trend-list-card { grid-column: 1 / -1; }
+.trend-list { max-height: 420px; overflow-y: auto; overscroll-behavior: contain; }
+.trend-list th { position: sticky; top: 0; z-index: 1; }
+.trend-list td:nth-child(5) { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

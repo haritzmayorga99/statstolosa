@@ -13,7 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body data-theme="light">
+<body data-theme="dark">
   <header class="topbar">
     <div class="brand">
       <div class="brand-logo" role="img" aria-label="Logo"></div>
@@ -38,13 +38,16 @@
         <div class="team-pick">
           <input type="radio" name="titular" id="titA" title="Titular: sus jugadores salen en la lista y va primero en el Sheets">
           <label class="sel"><span>Equipo A</span><select id="regA"></select></label>
+          <span class="titular-badge">Titular</span>
         </div>
         <div class="team-pick">
           <input type="radio" name="titular" id="titB" title="Titular: sus jugadores salen en la lista y va primero en el Sheets">
           <label class="sel"><span>Equipo B</span><select id="regB"></select></label>
+          <span class="titular-badge">Titular</span>
         </div>
       </div>
       <div class="reg-score" id="regScore"></div>
+      <p class="kbd-help">Atajos: <kbd>T</kbd> cambiar titular · <kbd>G</kbd> gol · <kbd>P</kbd> parada · <kbd>F</kbd> fuera · <kbd>Enter</kbd> guardar</p>
 
       <div class="reg-grid">
         <div class="panel players" id="regPlayers"></div>
@@ -54,15 +57,18 @@
           <div class="court-wrap" id="regCourt"></div>
         </div>
 
-        <div class="panel actions">
-          <div class="step-label">Tipo de lanzamiento</div>
-          <div class="accion-grid" id="regAcciones"></div>
-          <div class="summary" id="regSummary"></div>
-          <div class="result-grid">
+        <div class="panel results">
+            <div class="result-grid">
             <button class="res gol" data-res="GOL">GOL</button>
             <button class="res parada" data-res="PARADA">PARADA</button>
             <button class="res fuera" data-res="FUERA">FUERA</button>
           </div>
+        </div>
+
+        <div class="panel actions">
+          <div class="step-label">Tipo de lanzamiento</div>
+          <div class="accion-grid" id="regAcciones"></div>
+          <div class="summary" id="regSummary"></div>
           <div class="recent" id="regRecent"></div>
         </div>
       </div>
@@ -150,6 +156,15 @@
         <div class="card">
           <h3>Portería por lateralidad</h3>
           <div class="goal-wrap" id="trendLado"></div>
+        </div>
+      </div>
+      <div class="card trend-list-card">
+        <h3 id="trendListTitle">Lanzamientos</h3>
+        <div class="table-wrap trend-list">
+          <table class="hist" id="trendList">
+            <thead><tr><th>#</th><th>Equipo</th><th>Contrario</th><th>Nº</th><th>Jugador</th><th>Desde (zona)</th><th>Destino</th><th>Acción</th><th>Resultado</th></tr></thead>
+            <tbody></tbody>
+          </table>
         </div>
       </div>
     </section>
