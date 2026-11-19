@@ -544,7 +544,8 @@ function renderRegistrar() {
   // Los amagos solo se ofrecen con penalti; si cambias de zona, se quita el amago elegido
   const conPenalti = state.sel.zona === "PENALTI";
   if (!conPenalti && ACCIONES_AMAGO.includes(state.sel.accion)) state.sel.accion = "";
-  const visibles = conPenalti ? [...ACCIONES_BASE, ...ACCIONES_AMAGO] : ACCIONES_BASE;
+  if (conPenalti && ACCIONES_BASE.includes(state.sel.accion)) state.sel.accion = "";
+  const visibles = conPenalti ? ACCIONES_AMAGO : ACCIONES_BASE;
   $("#regAcciones").innerHTML = visibles.map((a) =>
     `<button class="acc ${a.includes("AMAGO") ? "amago" : ""} ${state.sel.accion === a ? "sel" : ""}" data-acc="${a}">${a}</button>`).join("");
 

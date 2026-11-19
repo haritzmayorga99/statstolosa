@@ -668,3 +668,37 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
   .accion-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .acc { font-size: 9px; letter-spacing: -.2px; padding: 0 1px; white-space: nowrap; min-height: 34px; }
 }
+
+/* ---------- Ajuste final móvil: cabecera, equipos, pista y sin FUERA (10) ---------- */
+@media (max-width: 899px) {
+  .topbar { padding: 6px 10px; gap: 8px; }
+  .brand { gap: 6px; }
+  .brand-logo { width: 28px; height: 28px; }
+  .brand-text { font-size: 14px; }
+  .sync-pill { display: none; }
+  .icon-btn { width: 32px; height: 32px; font-size: 16px; }
+
+  .team-pick .sel span { display: none; }
+  .team-pick .sel { padding: 2px 8px; }
+  .team-pick .sel select { font-size: 13px; padding: 2px 0; }
+  .team-pick input[type="radio"] { width: 20px; height: 20px; }
+  .reg-teams { min-height: 0; }
+
+  .court-wrap svg { max-height: 290px; width: auto; max-width: 100%; margin: 0 auto; display: block; }
+
+  .out-chip { display: none; }
+}
+
+/* Equipos a la altura de los botones de resultado (~40 px) */
+@media (max-width: 899px) {
+  .team-pick .sel { height: 40px; min-height: 0; display: flex; align-items: center; padding: 0 8px; box-sizing: border-box; }
+  .team-pick .sel select { height: 32px; min-height: 0; padding: 0 22px 0 0; line-height: 32px; font-size: 13px; }
+  #tab-registrar { padding-top: 2px; }
+}
+
+/* En Registrar (móvil) se oculta la cabecera para ganar altura; la barra de pestañas inferior sigue visible */
+@media (max-width: 899px) {
+  body:has(#tab-registrar.active) .topbar { display: contents; }
+  body:has(#tab-registrar.active) .topbar .brand,
+  body:has(#tab-registrar.active) .topbar .sync { display: none; }
+}
