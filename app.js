@@ -565,6 +565,7 @@ function renderRegistrar() {
   const falta = [!s.player && "jugador", !s.zona && "zona", !s.destino && "destino", !s.accion && "acción", !s.resultado && "resultado"].filter(Boolean);
   const saveBtn = $("#regSave");
   saveBtn.disabled = !(ready && s.resultado);
+  document.querySelector(".save-bar").classList.toggle("ready", !saveBtn.disabled);
   $("#regHint").textContent = falta.length ? "Falta: " + falta.join(", ") : "Listo para guardar";
   $("#regHint").className = "save-hint" + (falta.length ? "" : " ok");
 

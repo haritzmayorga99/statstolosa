@@ -716,3 +716,11 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
   .reg-grid { grid-template-columns: minmax(0, 1.6fr) minmax(0, 3fr); }
   .court-wrap svg { max-height: none; }
 }
+
+/* Móvil: la barra de guardar solo aparece cuando están completos todos los pasos; sin hueco vacío bajo los equipos */
+@media (max-width: 899px) {
+  .save-bar { display: none; }
+  .save-bar.ready { display: flex; }
+  .reg-score:empty { display: none; }
+  .reg-grid { margin-top: 8px; }
+}
