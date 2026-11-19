@@ -610,3 +610,61 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
   .trend-lado { order: 4; }
   .trend-list-card { order: 5; }
 }
+
+/* ---------- Compactación del Registro en móvil (sin scroll) ---------- */
+@media (max-width: 899px) {
+  #tab-registrar { padding-top: 6px; }
+  .reg-teams { gap: 8px; margin-bottom: 4px; }
+  .team-pick { gap: 6px; }
+  .team-pick input[type="radio"] { width: 22px; height: 22px; }
+  .team-pick .sel { padding: 4px 10px; min-height: 0; }
+  .team-pick .sel span { font-size: 10px; }
+  .team-pick .sel select { font-size: 14px; }
+  .reg-score { font-size: 12px; margin: 2px 0 6px; }
+  .reg-grid { gap: 8px; }
+  .players { gap: 5px; padding: 0; }
+  .ptile { min-height: 44px; border-radius: 12px; padding: 4px; }
+  .ptile .num { font-size: 17px; }
+  .results { padding: 6px; }
+  .results .result-grid { gap: 6px; }
+  .res { min-height: 40px; font-size: 14px; padding: 6px 4px; border-radius: 12px; }
+  .actions { padding: 8px 10px; gap: 6px; }
+  .step-label { display: none; }
+  .accion-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .acc { padding: 0 6px; min-height: 34px; font-size: 11px; }
+  .summary { display: none; }
+  .recent { display: none; }
+  .save-bar { padding: 6px 10px 6px; gap: 4px; }
+  .save-hint { font-size: 11px; }
+  .save-btn { min-height: 44px; font-size: 13px; border-radius: 14px; }
+  .tabs button { padding: 2px 0; }
+  .tabs .ico { font-size: 18px; }
+}
+
+/* Ajuste fino para que el Registro quepa en una pantalla de móvil */
+@media (max-width: 899px) {
+  .topbar { padding-top: 8px; padding-bottom: 8px; }
+  #tab-registrar { padding-bottom: 64px; }
+  .reg-teams { margin-top: 0; }
+  .reg-score { margin: 0 0 4px; }
+  .results { padding: 4px; }
+  .res { min-height: 36px; }
+  .actions { padding: 6px 8px; gap: 4px; }
+  .accion-grid { gap: 4px; }
+  .acc { min-height: 30px; }
+  .save-bar { padding: 4px 10px; }
+  .save-btn { min-height: 40px; }
+  .save-hint { line-height: 1.1; }
+}
+
+/* En Registrar no hace falta el espacio inferior de la navegación: la página cabe sin scroll */
+@media (max-width: 899px) {
+  body:has(#tab-registrar.active) { padding-bottom: 0; }
+  body:has(#tab-registrar.active) main { padding-bottom: 0; }
+}
+
+/* Acciones en 4 columnas: básicas en una fila; con penalti, amagos en dos filas más */
+@media (max-width: 899px) {
+  .accion-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .acc { font-size: 9px; letter-spacing: -.2px; padding: 0 1px; white-space: nowrap; min-height: 34px; }
+}

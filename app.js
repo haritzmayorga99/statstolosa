@@ -6,7 +6,9 @@
 // Constantes
 // ================================================================
 const ZONAS = ["EXT IZ", "6 IZ", "6 C", "6 DE", "EXT DER", "LAT IZ", "CENTRAL", "LAT DER", "PENALTI", "SAQUE", "POR"];
-const ACCIONES = ["SOLO", "CONTACTO", "CONTRAATAQUE", "PENETRACION", "1 AMAGO", "2 AMAGO", "3 AMAGO"];
+const ACCIONES = ["SOLO", "CONTACTO", "CONTRAATAQUE", "PENETRACION", "1 AMAGO", "2 AMAGO", "3 AMAGO", "4 AMAGO"];
+const ACCIONES_BASE = ["SOLO", "CONTACTO", "CONTRAATAQUE", "PENETRACION"];   // siempre visibles
+const ACCIONES_AMAGO = ["1 AMAGO", "2 AMAGO", "3 AMAGO", "4 AMAGO"];        // solo con zona PENALTI
 const RESULTADOS = ["GOL", "PARADA", "FUERA"];
 // En el Sheets, DESTINO_HORIZONTAL guarda la altura y DESTINO_VERTICAL el lado.
 // Se mantienen esos nombres de columna para no romper los datos existentes.
@@ -539,7 +541,11 @@ function renderRegistrar() {
     `<button class="out-chip ${state.sel.destino === "10" ? "sel" : ""}" data-dest="10">FUERA (10)</button>`;
   $("#regCourt").innerHTML = courtSVG({ mode: "select", selected: state.sel.zona });
 
-  $("#regAcciones").innerHTML = ACCIONES.map((a) =>
+  // Los amagos solo se ofrecen con penalti; si cambias de zona, se quita el amago elegido
+  const conPenalti = state.sel.zona === "PENALTI";
+  if (!conPenalti && ACCIONES_AMAGO.includes(state.sel.accion)) state.sel.accion = "";
+  const visibles = conPenalti ? [...ACCIONES_BASE, ...ACCIONES_AMAGO] : ACCIONES_BASE;
+  $("#regAcciones").innerHTML = visibles.map((a) =>
     `<button class="acc ${a.includes("AMAGO") ? "amago" : ""} ${state.sel.accion === a ? "sel" : ""}" data-acc="${a}">${a}</button>`).join("");
 
   const s = state.sel;
