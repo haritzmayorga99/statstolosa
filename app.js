@@ -399,7 +399,7 @@ function courtSVG(opts) {
     return `<path d="M${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx + r} ${cy} Z" ${extra}/>`;
   };
   // En modo stats el penalti es una tarjeta más grande dentro del área para que quepan 2 líneas
-  const statsLbl = { "6 C": [200, 160], "6 IZ": [95, 138], "6 DE": [305, 138], PENALTI: [200, 102] };
+  const statsLbl = { "6 C": [200, 160], "6 IZ": [95, 138], "6 DE": [305, 138], PENALTI: [200, 93] };
   const dark = `style="fill:#0b1220;stroke:none"`;
   let zones = "", labels = "";
   for (const z of ZONAS) {
@@ -407,7 +407,7 @@ function courtSVG(opts) {
     const s = stats[z] || { g: 0, t: 0 };
     const on = selected === z;
     if (isStats && z === "PENALTI") {
-      zones += `<rect x="146" y="66" width="108" height="60" rx="6" fill="#fff" class="zone" data-zona="PENALTI" ${on ? 'stroke="var(--accent)" stroke-width="4"' : ""}/>`;
+      zones += `<rect x="146" y="64" width="108" height="44" rx="6" fill="#fff" class="zone" data-zona="PENALTI" ${on ? 'stroke="var(--accent)" stroke-width="4"' : ""}/>`;
     } else {
       let fill = "transparent";
       if (z === "PENALTI") fill = on ? "var(--accent)" : "#fff";
@@ -426,9 +426,11 @@ function courtSVG(opts) {
       labels += `<text class="zone-lbl${sm}" x="${edge[0]}" y="${y + 6}" text-anchor="${edge[1]}" ${lstyle}>${z}</text>`;
     } else {
       const off = z === "SAQUE" || z === "POR" ? -6 : -10;
-      labels += `<text class="zone-lbl" x="${x}" y="${y + off}" text-anchor="middle" ${lstyle}>${z}</text>`;
-      labels += `<text class="zone-sub" x="${x}" y="${y + off + 16}" text-anchor="middle" ${lstyle}>${s.g} / ${s.t}</text>`;
-      if (s.t && !["SAQUE", "POR", "PENALTI"].includes(z)) labels += `<text class="zone-ef" x="${x}" y="${y + off + 30}" text-anchor="middle">${fmtPct(s.g, s.t)}</text>`;
+      // EXT DER: texto alineado al borde derecho de su zona para que no se salga de la pista
+      const ax = z === "EXT DER" ? 392 : x, anc = z === "EXT DER" ? "end" : "middle";
+      labels += `<text class="zone-lbl" x="${ax}" y="${y + off}" text-anchor="${anc}" ${lstyle}>${z}</text>`;
+      labels += `<text class="zone-sub" x="${ax}" y="${y + off + 16}" text-anchor="${anc}" ${lstyle}>${s.g} / ${s.t}</text>`;
+      if (s.t && !["SAQUE", "POR", "PENALTI"].includes(z)) labels += `<text class="zone-ef" x="${ax}" y="${y + off + 30}" text-anchor="${anc}">${fmtPct(s.g, s.t)}</text>`;
     }
   }
   const area6 = pathOf(arc(R6, 0, 180), true);
