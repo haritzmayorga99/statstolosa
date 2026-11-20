@@ -24,6 +24,7 @@
       <button data-tab="historial"><span class="ico">📋</span><span>Historial</span></button>
       <button data-tab="stats"><span class="ico">📊</span><span>Stats</span></button>
       <button data-tab="tendencias"><span class="ico">📈</span><span>Tendencias</span></button>
+      <button data-tab="laterales"><span class="ico">🥅</span><span>Laterales</span></button>
     </nav>
     <div class="sync">
       <span class="sync-pill" id="syncPill">Cargando…</span>
@@ -167,6 +168,21 @@
             <thead><tr><th>#</th><th>Equipo</th><th>Contrario</th><th>Nº</th><th>Jugador</th><th>Desde (zona)</th><th>Destino</th><th>Acción</th><th>Resultado</th></tr></thead>
             <tbody></tbody>
           </table>
+        </div>
+      </div>
+    </section>
+    <section id="tab-laterales" class="tab">
+      <div id="latLock" class="card lat-lock">
+        <h3>Página protegida</h3>
+        <input type="password" id="latPass" placeholder="Contraseña" inputmode="numeric" autocomplete="off">
+        <button id="latUnlock" class="btn-primary">Entrar</button>
+        <p id="latErr" class="lat-err"></p>
+      </div>
+      <div id="latContent" hidden>
+        <div class="seg" id="latMode"><button data-mode="pct" class="active">% tiros</button><button data-mode="gt">Gol / Tiro</button><button data-mode="ef">% eficacia</button></div>
+        <div class="lat-grid">
+          <div class="card"><h3>Lateral izquierdo <small>6 IZ · LAT IZ · EXT IZ</small></h3><div class="stage-wrap" id="latIzq"></div></div>
+          <div class="card"><h3>Lateral derecho <small>6 DE · LAT DER · EXT DER</small></h3><div class="stage-wrap" id="latDer"></div></div>
         </div>
       </div>
     </section>

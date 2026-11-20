@@ -109,7 +109,7 @@ body[data-theme="dark"] .sync-pill.err { color: #fca5a5; }
 /* Móvil: barra inferior fija con 4 pestañas */
 .tabs {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(5, 1fr);
   height: calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--panel);
@@ -724,3 +724,31 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
   .reg-score:empty { display: none; }
   .reg-grid { margin-top: 8px; }
 }
+
+/* ---------- Página Laterales ---------- */
+[hidden] { display: none !important; }
+.lat-lock { max-width: 320px; margin: 40px auto; text-align: center; display: grid; gap: 10px; }
+.lat-lock input { padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font-size: 16px; text-align: center; }
+.lat-err { color: #f87171; min-height: 1em; margin: 0; font-size: 13px; }
+.lat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 12px; }
+.lat-grid .card h3 small { margin-left: 8px; }
+@media (max-width: 899px) { .lat-grid { grid-template-columns: minmax(0, 1fr); } }
+.stage-wrap { position: relative; width: 100%; overflow: hidden; border-radius: 14px; background: #0b1f3a; }
+.stage { position: absolute; left: 0; top: 0; width: 896px; height: 1200px; transform-origin: 0 0; }
+.stage > img { position: absolute; left: 0; top: 0; width: 896px; height: 1200px; display: block; }
+.stage > svg { position: absolute; left: 0; top: 0; width: 896px; height: 1200px; }
+.cellbox {
+  position: absolute; left: 0; top: 0; width: 200px; height: 110px; transform-origin: 0 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding-top: 28px; box-sizing: border-box; text-align: center; pointer-events: none;
+  color: #fff; font: 800 30px/1.05 var(--display);
+  text-shadow: 0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+}
+.cellbox span:last-child { font-size: 22px; }
+.zlbl {
+  position: absolute; transform: translate(-50%, -50%); text-align: center; white-space: nowrap; pointer-events: none;
+  color: #fff; font: 800 26px/1.05 var(--display);
+  text-shadow: 0 0 3px #000, 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+}
+.zlbl b { display: block; font-size: 22px; }
+.zlbl small { display: block; font-size: 17px; }

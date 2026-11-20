@@ -952,22 +952,145 @@ function bindTendencias() {
 function renderAnalysis() { renderFilters(); renderStats(); renderTendencias(); }
 function renderAll() {
   updateSync();
+  if (state.tab === "laterales") renderLaterales();
   renderRegistrar();
   renderHistorial();
   renderAnalysis();
 }
+
+// ================================================================
+// Página Laterales (protegida con contraseña; quitar LAT_PASS cuando esté pulido)
+// ================================================================
+const LAT_PASS = "1";
+const LAT = {
+  izq: { img: "assets/lateral_izq.jpg", zones: ["6 IZ", "LAT IZ", "EXT IZ"], mirror: false,
+    quad: [[268, 292], [512, 165], [520, 410], [283, 578]],
+    labels: [[534, 794, "6 IZ"], [584, 1044, "LAT IZ"], [138, 884, "EXT IZ"]] },
+  der: { img: "assets/lateral_der.jpg", zones: ["6 DE", "LAT DER", "EXT DER"], mirror: true,
+    quad: [[372, 163], [632, 290], [612, 580], [380, 410]],
+    labels: [[298, 774, "6 DE"], [268, 1034, "LAT DER"], [700, 866, "EXT DER"]] },
+};
+const LAT_W = 896, LAT_H = 1200, LAT_TW = 200, LAT_TH = 110;
+let latUnlocked = false, latMode = "pct";
+
+function solve8(M, v) {
+  const n = 8, A = M.map((r, i) => [...r, v[i]]);
+  for (let c = 0; c < n; c++) {
+    let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    [A[c], A[p]] = [A[p], A[c]];
+    for (let r = 0; r < n; r++) if (r !== c) {
+      const f = A[r][c] / A[c][c];
+      for (let k = c; k <= n; k++) A[r][k] -= f * A[c][k];
+    }
+  }
+  return A.map((r, i) => r[n] / r[i]);
+}
+// Homografía src -> dst (4 puntos) y su expresión CSS matrix3d (transform-origin 0 0)
+function cssPerspective(src, dst) {
+  const M = [], v = [];
+  src.forEach(([x, y], i) => {
+    const [X, Y] = dst[i];
+    M.push([x, y, 1, 0, 0, 0, -X * x, -X * y]); v.push(X);
+    M.push([0, 0, 0, x, y, 1, -Y * x, -Y * y]); v.push(Y);
+  });
+  const [A, B, C, D, E, F, G, H] = solve8(M, v);
+  return `matrix3d(${A},${D},0,${G},${B},${E},0,${H},0,0,1,0,${C},${F},0,1)`;
+}
+function latBil(q, u, v) {
+  const [TL, TR, BR, BL] = q;
+  return [(1-u)*(1-v)*TL[0] + u*(1-v)*TR[0] + u*v*BR[0] + (1-u)*v*BL[0],
+          (1-u)*(1-v)*TL[1] + u*(1-v)*TR[1] + u*v*BR[1] + (1-u)*v*BL[1]];
+}
+function latStage(key) {
+  const cfg = LAT[key];
+  const rows = viewRows();
+  const inZone = (z) => rows.filter((r) => r.zona === z);
+  const lateral = rows.filter((r) => cfg.zones.includes(r.zona));
+  const tot = lateral.length;
+  const cells = {};
+  lateral.forEach((r) => {
+    if (["1","2","3","4","5","6","7","8","9"].includes(r.destino)) {
+      const c = cells[r.destino] || (cells[r.destino] = [0, 0]);
+      c[1]++; if (r.resultado === "GOL") c[0]++;
+    }
+  });
+  const ctot = Object.values(cells).reduce((s, c) => s + c[1], 0);
+  const tmax = Math.max(1, ...Object.values(cells).map((c) => c[1]));
+  const efColorRGB = (v) => {
+    v = Math.max(0, Math.min(1, v));
+    return v < 0.5 ? [255, Math.round(255 * v / 0.5), 0] : [Math.round(255 * (1 - (v - 0.5) / 0.5)), 200, 0];
+  };
+  const fmt = (g, t, base) => {
+    if (latMode === "pct") return [`${(100 * t / (base || 1)).toFixed(0)}%`, `${t} t`];
+    if (latMode === "gt") return [`${g}/${t}`, `${(100 * g / (t || 1)).toFixed(0)}%`];
+    return [`${(100 * g / (t || 1)).toFixed(0)}%`, `${g}/${t}`];
+  };
+  const q = cfg.quad;
+  const cellPoly = (c, r) => [latBil(q, c/3, r/3), latBil(q, (c+1)/3, r/3), latBil(q, (c+1)/3, (r+1)/3), latBil(q, c/3, (r+1)/3)];
+  let svg = "", boxes = "";
+  for (let k = 1; k <= 9; k++) {
+    let c = (k - 1) % 3; const r = Math.floor((k - 1) / 3);
+    if (cfg.mirror) c = 2 - c;
+    const poly = cellPoly(c, r);
+    const [g, t] = cells[k] || [0, 0];
+    const fill = !t ? "none"
+      : latMode === "pct" ? `rgba(16,185,129,${((40 + 170 * (t / tmax)) / 255).toFixed(2)})`
+      : `rgba(${efColorRGB(g / t).join(",")},0.6)`;
+    svg += `<polygon points="${poly.map((p) => p.map((n) => n.toFixed(1)).join(",")).join(" ")}" fill="${fill}" stroke="rgba(255,255,255,.8)" stroke-width="1.5"/>`;
+    if (t) {
+      const [a, b] = fmt(g, t, latMode === "pct" ? ctot : 0);
+      const src = [[0,0],[LAT_TW,0],[LAT_TW,LAT_TH],[0,LAT_TH]];
+      boxes += `<div class="cellbox" style="transform:${cssPerspective(src, poly)}"><span>${a}</span><span>${b}</span></div>`;
+    }
+  }
+  const zones = cfg.labels.map(([x, y, z]) => {
+    const zr = inZone(z), g = zr.filter((r) => r.resultado === "GOL").length, t = zr.length;
+    const [a, b] = fmt(g, t, latMode === "pct" ? tot : 0);
+    return `<div class="zlbl" style="left:${x}px;top:${y}px"><b>${z}</b><span>${a}</span><small>${b}</small></div>`;
+  }).join("");
+  return `<div class="stage"><img src="${cfg.img}" alt="Lateral ${key === "izq" ? "izquierdo" : "derecho"}"><svg viewBox="0 0 ${LAT_W} ${LAT_H}">${svg}</svg>${boxes}${zones}</div>`;
+}
+function latResize() {
+  document.querySelectorAll(".stage-wrap").forEach((w) => {
+    const s = w.clientWidth / LAT_W;
+    const st = w.querySelector(".stage");
+    if (st) st.style.transform = `scale(${s})`;
+    w.style.height = (LAT_H * s) + "px";
+  });
+}
+function renderLaterales() {
+  $("#latLock").hidden = latUnlocked;
+  $("#latContent").hidden = !latUnlocked;
+  if (!latUnlocked) return;
+  $$("#latMode button").forEach((b) => b.classList.toggle("active", b.dataset.mode === latMode));
+  $("#latIzq").innerHTML = latStage("izq");
+  $("#latDer").innerHTML = latStage("der");
+  latResize();
+}
+function bindLaterales() {
+  const tryUnlock = () => {
+    if ($("#latPass").value.trim() === LAT_PASS) { latUnlocked = true; $("#latErr").textContent = ""; renderLaterales(); }
+    else $("#latErr").textContent = "Contraseña incorrecta";
+  };
+  $("#latUnlock").onclick = tryUnlock;
+  $("#latPass").onkeydown = (e) => { if (e.key === "Enter") tryUnlock(); };
+  $("#latMode").onclick = (e) => { const b = e.target.closest("[data-mode]"); if (!b) return; latMode = b.dataset.mode; renderLaterales(); };
+  window.addEventListener("resize", latResize);
+}
+
 function showTab(tab) {
   if (!$("#tab-" + tab)) tab = "registrar";
   state.tab = tab; store.set("bm_tab", tab);
   document.body.dataset.theme = "dark";
   $$(".tab").forEach((s) => s.classList.toggle("active", s.id === "tab-" + tab));
   $$("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  if (tab === "laterales") renderLaterales();
   window.scrollTo({ top: 0 });
 }
 
 $("#tabs").onclick = (e) => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); };
 $("#btnRefresh").onclick = loadData;
-bindRegistrar(); bindHistorial(); bindFilters(); bindStats(); bindTendencias();
+bindRegistrar(); bindHistorial(); bindFilters(); bindStats(); bindTendencias(); bindLaterales();
 showTab(state.tab);
 renderAll();
 loadData();
