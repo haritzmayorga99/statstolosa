@@ -311,7 +311,7 @@ function toast(msg, action) {
 // ================================================================
 // Dibujo: pista
 // ================================================================
-const LPX = 170, RPX = 230, R6 = 120, R9 = 180, BOTTOM = 372;
+const LPX = 170, RPX = 230, R6 = 120, R9 = 220, BOTTOM = 372;
 const rad = (d) => (d * Math.PI) / 180;
 // φ ∈ [0,180]: 0 = línea de fondo izquierda, 90 = frente a portería, 180 = fondo derecha
 function dpt(rho, phi, side) {
@@ -364,14 +364,14 @@ const ZONE_GEOM = (() => {
   return {
     "EXT IZ": { poly: band(R6, 700, 0, 40), lbl: [30, 52] },
     "6 IZ": { poly: band(R6, R9, 40, 80), lbl: [100, 140] },
-    "6 C": { poly: band(R6, R9, 80, 100), lbl: [200, 168] },
+    "6 C": { poly: band(R6, R9, 80, 100), lbl: [200, 192] },
     "6 DE": { poly: band(R6, R9, 100, 140), lbl: [300, 140] },
     "EXT DER": { poly: band(R6, 700, 140, 180), lbl: [370, 52] },
     "LAT IZ": { poly: band(R9, 700, 40, 80), lbl: [66, 262] },
     "CENTRAL": { poly: band(R9, 700, 80, 100), lbl: [200, 272] },
     "LAT DER": { poly: band(R9, 700, 100, 140), lbl: [334, 262] },
     "SAQUE": { rect: [0, BOTTOM, 400, 46], lbl: [200, 396] },
-    "PENALTI": { rect: [166, 124, 68, 28], lbl: [200, 138] },
+    "PENALTI": { rect: [152, 122, 96, 38], lbl: [200, 143] },
     "POR": { semi: [200, 470, 54], lbl: [200, 450] },
   };
 })();
@@ -399,7 +399,7 @@ function courtSVG(opts) {
     return `<path d="M${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx + r} ${cy} Z" ${extra}/>`;
   };
   // En modo stats el penalti es una tarjeta más grande dentro del área para que quepan 2 líneas
-  const statsLbl = { "6 C": [200, 150], "6 IZ": [95, 138], "6 DE": [305, 138], PENALTI: [200, 102] };
+  const statsLbl = { "6 C": [200, 160], "6 IZ": [95, 138], "6 DE": [305, 138], PENALTI: [200, 102] };
   const dark = `style="fill:#0b1220;stroke:none"`;
   let zones = "", labels = "";
   for (const z of ZONAS) {
@@ -407,7 +407,7 @@ function courtSVG(opts) {
     const s = stats[z] || { g: 0, t: 0 };
     const on = selected === z;
     if (isStats && z === "PENALTI") {
-      zones += `<rect x="164" y="74" width="72" height="44" rx="6" fill="#fff" class="zone" data-zona="PENALTI" ${on ? 'stroke="var(--accent)" stroke-width="4"' : ""}/>`;
+      zones += `<rect x="146" y="66" width="108" height="60" rx="6" fill="#fff" class="zone" data-zona="PENALTI" ${on ? 'stroke="var(--accent)" stroke-width="4"' : ""}/>`;
     } else {
       let fill = "transparent";
       if (z === "PENALTI") fill = on ? "var(--accent)" : "#fff";
