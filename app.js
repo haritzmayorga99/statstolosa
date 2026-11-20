@@ -117,6 +117,8 @@ const state = {
   filters: { equipo: "", contrario: "", jugador: "", accion: "", zona: "" },
   sort: { key: "t", asc: false },
   destMode: "pct",
+  altMode: "pct",
+  ladoMode: "pct",
   histLimit: HIST_PAGE,
   histQuery: "",
 };
@@ -499,18 +501,26 @@ function goalGridSVG({ mode, selected, cells = {}, total = 0, destMode = "pct", 
     <line x1="${GX}" y1="${GY + ch}" x2="${GX + GW}" y2="${GY + ch}"/><line x1="${GX}" y1="${GY + 2 * ch}" x2="${GX + GW}" y2="${GY + 2 * ch}"/></g>`;
   return goalFrame(s, id);
 }
-function goalBandsSVG({ parts, counts, vertical, id }) {
-  const n = parts.length, max = Math.max(1, ...parts.map((p) => counts[p]?.t || 0));
+function goalBandsSVG({ parts, counts, vertical, id, mode = "pct" }) {
+  const n = parts.length;
+  const total = parts.reduce((s, p) => s + (counts[p]?.t || 0), 0);
+  const max = Math.max(1, ...parts.map((p) => (mode === "ef" ? (counts[p]?.t ? counts[p].g / counts[p].t : 0) : (counts[p]?.t || 0))));
   let s = "";
   parts.forEach((p, i) => {
     const c = counts[p] || { g: 0, t: 0 };
+    const v = mode === "ef" ? (c.t ? c.g / c.t : 0) : c.t;
     const x = vertical ? GX + (i * GW) / n : GX, y = vertical ? GY : GY + (i * GH) / n;
     const w = vertical ? GW / n : GW, h = vertical ? GH : GH / n;
-    s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="rgba(16,185,129,${c.t ? (0.15 + 0.6 * (c.t / max)).toFixed(2) : 0})" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>`;
+    const fill = mode === "ef"
+      ? (c.t ? efColor(v, 0.75) : "rgba(0,0,0,0)")
+      : `rgba(16,185,129,${c.t ? (0.15 + 0.6 * (v / max)).toFixed(2) : 0})`;
+    s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>`;
     const cx = x + w / 2, cy = y + h / 2;
+    const main = mode === "pct" ? fmtPct(c.t, total, 1) : mode === "gt" ? `${c.g}/${c.t}` : fmtPct(c.g, c.t);
+    const sub = mode === "pct" ? `${c.t} tiros` : mode === "gt" ? `${fmtPct(c.g, c.t)} ef.` : `${c.g}/${c.t}`;
     s += `<text class="gsub" x="${cx}" y="${cy - 12}" text-anchor="middle" style="font-weight:700;letter-spacing:1px">${p}</text>`;
-    s += `<text class="gval" x="${cx}" y="${cy + 10}" text-anchor="middle" style="font-size:24px">${c.t}</text>`;
-    s += `<text class="gsub" x="${cx}" y="${cy + 26}" text-anchor="middle">${c.g} gol · ${fmtPct(c.g, c.t)}</text>`;
+    s += `<text class="gval" x="${cx}" y="${cy + 10}" text-anchor="middle" style="font-size:24px">${main}</text>`;
+    s += `<text class="gsub" x="${cx}" y="${cy + 26}" text-anchor="middle">${sub}</text>`;
   });
   return goalFrame(s, id);
 }
@@ -910,8 +920,10 @@ function renderTendencias() {
   const fuera = rows.filter((r) => r.resultado === "FUERA").length;
   const by = (field) => { const o = {}; for (const [k, rs] of groupBy(rows, (r) => r[field])) { const c = count(rs); o[k] = { g: c.g, t: c.t }; } return o; };
   const head = `<div class="goal-head">Tiros fuera <span>${fuera}</span></div>`;
-  $("#trendAltura").innerHTML = head + goalBandsSVG({ parts: ["ARRIBA", "MEDIO", "ABAJO"], counts: by("altura"), vertical: false, id: "alt" }) + `<div class="goal-total">Total: ${rows.length}</div>`;
-  $("#trendLado").innerHTML = head + goalBandsSVG({ parts: ["IZQUIERDA", "CENTRO", "DERECHA"], counts: by("lado"), vertical: true, id: "lado" }) + `<div class="goal-total">Total: ${rows.length}</div>`;
+  $("#trendAltura").innerHTML = head + goalBandsSVG({ parts: ["ARRIBA", "MEDIO", "ABAJO"], counts: by("altura"), vertical: false, id: "alt", mode: state.altMode }) + `<div class="goal-total">Total: ${rows.length}</div>`;
+  $("#trendLado").innerHTML = head + goalBandsSVG({ parts: ["IZQUIERDA", "CENTRO", "DERECHA"], counts: by("lado"), vertical: true, id: "lado", mode: state.ladoMode }) + `<div class="goal-total">Total: ${rows.length}</div>`;
+  $$("#altMode button").forEach((b) => b.classList.toggle("active", b.dataset.mode === state.altMode));
+  $$("#ladoMode button").forEach((b) => b.classList.toggle("active", b.dataset.mode === state.ladoMode));
 }
 
 function bindTendencias() {
@@ -923,6 +935,14 @@ function bindTendencias() {
   $("#destMode").onclick = (e) => {
     const b = e.target.closest("[data-mode]"); if (!b) return;
     state.destMode = b.dataset.mode; renderTendencias();
+  };
+  $("#altMode").onclick = (e) => {
+    const b = e.target.closest("[data-mode]"); if (!b) return;
+    state.altMode = b.dataset.mode; renderTendencias();
+  };
+  $("#ladoMode").onclick = (e) => {
+    const b = e.target.closest("[data-mode]"); if (!b) return;
+    state.ladoMode = b.dataset.mode; renderTendencias();
   };
 }
 
