@@ -179,10 +179,14 @@
         <p id="latErr" class="lat-err"></p>
       </div>
       <div id="latContent" hidden>
-        <div class="seg" id="latMode"><button data-mode="pct" class="active">% tiros</button><button data-mode="gt">Gol / Tiro</button><button data-mode="ef">% eficacia</button></div>
+        <div class="filters" data-filters></div>
         <div class="lat-grid">
           <div class="card"><h3>Lateral izquierdo <small>6 IZ · LAT IZ · EXT IZ</small></h3><div class="stage-wrap" id="latIzq"></div></div>
           <div class="card"><h3>Lateral derecho <small>6 DE · LAT DER · EXT DER</small></h3><div class="stage-wrap" id="latDer"></div></div>
+        </div>
+        <div class="lat-bottom">
+          <div class="seg" id="latMode"><button data-mode="pct" class="active">% tiros</button><button data-mode="gt">Gol / Tiro</button><button data-mode="ef">% eficacia</button></div>
+          <p id="latZoneInfo" class="lat-zone-info"></p>
         </div>
       </div>
     </section>

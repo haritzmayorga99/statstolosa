@@ -949,7 +949,7 @@ function bindTendencias() {
 // ================================================================
 // Navegación y render global
 // ================================================================
-function renderAnalysis() { renderFilters(); renderStats(); renderTendencias(); }
+function renderAnalysis() { renderFilters(); renderStats(); renderTendencias(); if (state.tab === "laterales") renderLaterales(); }
 function renderAll() {
   updateSync();
   if (state.tab === "laterales") renderLaterales();
@@ -971,7 +971,7 @@ const LAT = {
     labels: [[298, 774, "6 DE"], [268, 1034, "LAT DER"], [700, 866, "EXT DER"]] },
 };
 const LAT_W = 896, LAT_H = 1200, LAT_TW = 200, LAT_TH = 110;
-let latUnlocked = false, latMode = "pct";
+let latUnlocked = false, latMode = "pct", latZone = "";
 
 function solve8(M, v) {
   const n = 8, A = M.map((r, i) => [...r, v[i]]);
@@ -1001,14 +1001,24 @@ function latBil(q, u, v) {
   return [(1-u)*(1-v)*TL[0] + u*(1-v)*TR[0] + u*v*BR[0] + (1-u)*v*BL[0],
           (1-u)*(1-v)*TL[1] + u*(1-v)*TR[1] + u*v*BR[1] + (1-u)*v*BL[1]];
 }
+function latRows() {
+  const f = state.filters;
+  return viewRows().filter((r) =>
+    (!f.equipo || r.equipo === f.equipo) &&
+    (!f.contrario || r.contrario === f.contrario) &&
+    (!f.jugador || pkey(r) === f.jugador) &&
+    (!f.accion || r.accion === f.accion));
+}
 function latStage(key) {
   const cfg = LAT[key];
-  const rows = viewRows();
+  const rows = latRows();
   const inZone = (z) => rows.filter((r) => r.zona === z);
   const lateral = rows.filter((r) => cfg.zones.includes(r.zona));
+  // Si hay una zona seleccionada, las casillas solo cuentan sus tiros
+  const cellRows = latZone ? lateral.filter((r) => r.zona === latZone) : lateral;
   const tot = lateral.length;
   const cells = {};
-  lateral.forEach((r) => {
+  cellRows.forEach((r) => {
     if (["1","2","3","4","5","6","7","8","9"].includes(r.destino)) {
       const c = cells[r.destino] || (cells[r.destino] = [0, 0]);
       c[1]++; if (r.resultado === "GOL") c[0]++;
@@ -1046,7 +1056,8 @@ function latStage(key) {
   const zones = cfg.labels.map(([x, y, z]) => {
     const zr = inZone(z), g = zr.filter((r) => r.resultado === "GOL").length, t = zr.length;
     const [a, b] = fmt(g, t, latMode === "pct" ? tot : 0);
-    return `<div class="zlbl" style="left:${x}px;top:${y}px"><b>${z}</b><span>${a}</span><small>${b}</small></div>`;
+    const cls = "zlbl" + (latZone === z ? " on" : latZone && latZone !== z ? " off" : "");
+    return `<div class="${cls}" data-zona="${z}" style="left:${x}px;top:${y}px"><b>${z}</b><span>${a}</span><small>${b}</small></div>`;
   }).join("");
   return `<div class="stage"><img src="${cfg.img}" alt="Lateral ${key === "izq" ? "izquierdo" : "derecho"}"><svg viewBox="0 0 ${LAT_W} ${LAT_H}">${svg}</svg>${boxes}${zones}</div>`;
 }
@@ -1065,6 +1076,9 @@ function renderLaterales() {
   $$("#latMode button").forEach((b) => b.classList.toggle("active", b.dataset.mode === latMode));
   $("#latIzq").innerHTML = latStage("izq");
   $("#latDer").innerHTML = latStage("der");
+  $("#latZoneInfo").innerHTML = latZone
+    ? `Zona: <b>${latZone}</b> <button class="chip-x" data-clear-zone>Quitar ✕</button>`
+    : "Toca una zona para ver solo sus tiros";
   latResize();
 }
 function bindLaterales() {
@@ -1075,6 +1089,13 @@ function bindLaterales() {
   $("#latUnlock").onclick = tryUnlock;
   $("#latPass").onkeydown = (e) => { if (e.key === "Enter") tryUnlock(); };
   $("#latMode").onclick = (e) => { const b = e.target.closest("[data-mode]"); if (!b) return; latMode = b.dataset.mode; renderLaterales(); };
+  $("#latContent").addEventListener("click", (e) => {
+    if (e.target.closest("[data-clear-zone]")) { latZone = ""; renderLaterales(); return; }
+    const z = e.target.closest(".zlbl[data-zona]");
+    if (!z) return;
+    latZone = latZone === z.dataset.zona ? "" : z.dataset.zona;
+    renderLaterales();
+  });
   window.addEventListener("resize", latResize);
 }
 

@@ -752,3 +752,14 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
 }
 .zlbl b { display: block; font-size: 22px; }
 .zlbl small { display: block; font-size: 17px; }
+
+/* Laterales: filtros, zonas seleccionables y selector debajo de las fotos */
+#latContent .filters { margin-bottom: 12px; }
+.lat-bottom { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 12px; }
+.lat-zone-info { margin: 0; font-size: 13px; color: var(--muted); text-align: center; }
+.lat-zone-info b { color: var(--text); }
+.chip-x { margin-left: 6px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font-size: 12px; cursor: pointer; }
+.zlbl { cursor: pointer; pointer-events: auto; padding: 4px 6px; border-radius: 8px; transition: opacity .15s, background .15s; }
+.zlbl:hover { background: rgba(255,255,255,.12); }
+.zlbl.on { background: rgba(255,255,255,.25); outline: 2px solid #fff; }
+.zlbl.off { opacity: .35; }
