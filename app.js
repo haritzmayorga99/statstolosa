@@ -953,6 +953,7 @@ function renderAnalysis() { renderFilters(); renderStats(); renderTendencias(); 
 function renderAll() {
   updateSync();
   if (state.tab === "laterales") renderLaterales();
+  if (state.tab === "resumen") renderResumen();
   renderRegistrar();
   renderHistorial();
   renderAnalysis();
@@ -1099,6 +1100,99 @@ function bindLaterales() {
   window.addEventListener("resize", latResize);
 }
 
+// ================================================================
+// Resumen (protegida con contraseña; quitar RES_PASS cuando esté pulido)
+// ================================================================
+const RES_PASS = "1";
+let resUnlocked = false, resMode = "pct", resAmago = "TODOS", resPopup = null;
+
+function resTopPlayers(rows, filter, n = 3) {
+  const map = new Map();
+  for (const r of rows.filter(filter)) {
+    const k = pkey(r);
+    const e = map.get(k) || { key: k, numero: r.numero, nombre: r.jugador, t: 0, g: 0 };
+    e.t++; if (r.resultado === "GOL") e.g++;
+    map.set(k, e);
+  }
+  return [...map.values()].filter((e) => e.t > 0).sort((a, b) => b.t - a.t || b.g - a.g).slice(0, n);
+}
+function renderResumen() {
+  $("#resLock").hidden = resUnlocked;
+  $("#resContent").hidden = !resUnlocked;
+  if (!resUnlocked) return;
+  const all = viewRows();
+  const teams = [...new Set(all.map((r) => r.equipo).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const sel = $("#resTeam");
+  if (!sel.value || !teams.includes(sel.value)) sel.value = teams[0] || "";
+  if (sel.innerHTML !== teams.map((t) => `<option ${t === sel.value ? "selected" : ""}>${esc(t)}</option>`).join("")) {
+    sel.innerHTML = teams.map((t) => `<option ${t === sel.value ? "selected" : ""}>${esc(t)}</option>`).join("");
+  }
+  const team = sel.value;
+  const rows = all.filter((r) => r.equipo === team);
+  const card = (kind, e, main, sub) => `<button class="pcard" data-kind="${kind}" data-key="${esc(e.key)}">
+      <span class="num">#${esc(e.numero)}</span><span class="name">${esc(e.nombre)}</span>
+      <span class="big">${main}</span><span class="sub">${sub}</span></button>`;
+  const max = resTopPlayers(rows, (r) => r.zona !== "PENALTI");
+  const pen = resTopPlayers(rows, (r) => r.zona === "PENALTI");
+  $("#resMax").innerHTML = max.length
+    ? max.map((e) => card("max", e, `${e.t} tiros`, `${e.g} goles · ${(100 * e.g / e.t).toFixed(0)}%`)).join("")
+    : `<p class="empty-state">Sin lanzamientos</p>`;
+  $("#resPen").innerHTML = pen.length
+    ? pen.map((e) => card("pen", e, `${e.t} penaltis`, `${e.g} goles · ${(100 * e.g / e.t).toFixed(0)}%`)).join("")
+    : `<p class="empty-state">Sin penaltis en este equipo</p>`;
+}
+function resModalHTML(kind, key, team) {
+  const numero = key.split("|")[1];
+  const player = viewRows().filter((r) => r.equipo === team && pkey(r) === key);
+  const isPen = kind === "pen";
+  let base = isPen ? player.filter((r) => r.zona === "PENALTI") : player.filter((r) => r.zona !== "PENALTI");
+  if (isPen && resAmago !== "TODOS") base = base.filter((r) => r.accion === resAmago);
+  const cells = {};
+  for (const [d, rs] of groupBy(base.filter((r) => ["1","2","3","4","5","6","7","8","9"].includes(r.destino)), (r) => r.destino)) {
+    const c = count(rs); cells[d] = { g: c.g, t: c.t };
+  }
+  const goal = goalGridSVG({ mode: "stats", cells, total: base.length, destMode: resMode, id: "res" });
+  const zstats = {};
+  for (const [z, rs] of groupBy(base, (r) => r.zona)) { const c = count(rs); zstats[z] = { g: c.g, t: c.t }; }
+  const seg = `<div class="seg" id="resModeSeg"><button data-mode="pct" ${resMode==="pct"?'class="active"':""}>% tiros</button><button data-mode="gt" ${resMode==="gt"?'class="active"':""}>Gol / Tiro</button><button data-mode="ef" ${resMode==="ef"?'class="active"':""}>% eficacia</button></div>`;
+  const amagos = isPen ? `<div class="res-amago" id="resAmagoSeg">${["TODOS","1 AMAGO","2 AMAGO","3 AMAGO","4 AMAGO"].map((a) => `<button data-amago="${a}" class="${resAmago===a?"active":""}">${a}</button>`).join("")}</div>` : "";
+  const court = isPen ? "" : `<div class="court-wrap" style="margin-top:14px">${courtSVG({ mode: "stats", selected: "", stats: zstats })}</div>`;
+  return { title: `#${numero} ${base[0]?.jugador || player[0]?.jugador || ""} · ${isPen ? "Penaltis" : "Máximo lanzador"}`,
+    body: `${seg}${amagos}<div style="margin-top:10px">${goal}<div class="goal-total">Total: ${base.length}</div></div>${court}` };
+}
+function openResModal(kind, key) {
+  resPopup = { kind, key, team: $("#resTeam").value };
+  if (kind === "pen") resAmago = "TODOS";
+  paintResModal();
+  $("#resModal").hidden = false;
+}
+function paintResModal() {
+  if (!resPopup) return;
+  const { title, body } = resModalHTML(resPopup.kind, resPopup.key, resPopup.team);
+  $("#resModalTitle").textContent = title;
+  $("#resModalBody").innerHTML = body;
+}
+function bindResumen() {
+  const tryUnlock = () => {
+    if ($("#resPass").value.trim() === RES_PASS) { resUnlocked = true; $("#resErr").textContent = ""; renderResumen(); }
+    else $("#resErr").textContent = "Contraseña incorrecta";
+  };
+  $("#resUnlock").onclick = tryUnlock;
+  $("#resPass").onkeydown = (e) => { if (e.key === "Enter") tryUnlock(); };
+  $("#resTeam").onchange = renderResumen;
+  $("#resContent").addEventListener("click", (e) => {
+    const c = e.target.closest(".pcard[data-kind]");
+    if (c) openResModal(c.dataset.kind, c.dataset.key);
+  });
+  $("#resModal").addEventListener("click", (e) => {
+    if (e.target.id === "resModal" || e.target.closest("#resClose")) { $("#resModal").hidden = true; resPopup = null; return; }
+    const m = e.target.closest("#resModeSeg [data-mode]");
+    if (m) { resMode = m.dataset.mode; paintResModal(); return; }
+    const a = e.target.closest("[data-amago]");
+    if (a) { resAmago = a.dataset.amago; paintResModal(); }
+  });
+}
+
 function showTab(tab) {
   if (!$("#tab-" + tab)) tab = "registrar";
   state.tab = tab; store.set("bm_tab", tab);
@@ -1106,12 +1200,13 @@ function showTab(tab) {
   $$(".tab").forEach((s) => s.classList.toggle("active", s.id === "tab-" + tab));
   $$("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
   if (tab === "laterales") renderLaterales();
+  if (tab === "resumen") renderResumen();
   window.scrollTo({ top: 0 });
 }
 
 $("#tabs").onclick = (e) => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); };
 $("#btnRefresh").onclick = loadData;
-bindRegistrar(); bindHistorial(); bindFilters(); bindStats(); bindTendencias(); bindLaterales();
+bindRegistrar(); bindHistorial(); bindFilters(); bindStats(); bindTendencias(); bindLaterales(); bindResumen();
 showTab(state.tab);
 renderAll();
 loadData();

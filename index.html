@@ -25,6 +25,7 @@
       <button data-tab="stats"><span class="ico">📊</span><span>Stats</span></button>
       <button data-tab="tendencias"><span class="ico">📈</span><span>Tendencias</span></button>
       <button data-tab="laterales"><span class="ico">🥅</span><span>Laterales</span></button>
+      <button data-tab="resumen"><span class="ico">🏆</span><span>Resumen</span></button>
     </nav>
     <div class="sync">
       <span class="sync-pill" id="syncPill">Cargando…</span>
@@ -187,6 +188,32 @@
         <div class="lat-bottom">
           <div class="seg" id="latMode"><button data-mode="pct" class="active">% tiros</button><button data-mode="gt">Gol / Tiro</button><button data-mode="ef">% eficacia</button></div>
           <p id="latZoneInfo" class="lat-zone-info"></p>
+        </div>
+      </div>
+    </section>
+    <section id="tab-resumen" class="tab">
+      <div id="resLock" class="card lat-lock">
+        <h3>Página protegida</h3>
+        <input type="password" id="resPass" placeholder="Contraseña" inputmode="numeric" autocomplete="off">
+        <button id="resUnlock" class="btn-primary">Entrar</button>
+        <p id="resErr" class="lat-err"></p>
+      </div>
+      <div id="resContent" hidden>
+        <div class="res-bar"><label class="sel"><span>Equipo</span><select id="resTeam"></select></label></div>
+        <div class="card">
+          <h3>Máximos lanzadores <small>tiros sin penaltis · top 3</small></h3>
+          <div class="carousel" id="resMax"></div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <h3>Lanzadores de penalti <small>penaltis lanzados · top 3</small></h3>
+          <div class="carousel" id="resPen"></div>
+        </div>
+      </div>
+      <div id="resModal" class="res-modal" hidden>
+        <div class="res-box">
+          <button class="res-x" id="resClose" aria-label="Cerrar">✕</button>
+          <h3 id="resModalTitle"></h3>
+          <div id="resModalBody"></div>
         </div>
       </div>
     </section>
