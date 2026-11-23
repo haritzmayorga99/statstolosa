@@ -466,7 +466,7 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
 #tab-tendencias .card { display: flex; flex-direction: column; }
 #tab-tendencias .court-wrap { border-radius: 14px; overflow: hidden; width: 100%; max-width: 460px; align-self: center; }
 #tab-tendencias .seg { align-self: center; margin-top: 12px; }
-.goal-total { font-size: 12px; color: var(--muted); }
+.goal-total { font-size: 10px; color: var(--muted); }
 .goal-head { font: 800 14px var(--display); letter-spacing: .5px; text-transform: uppercase; }
 .goal-head span { color: #f87171; }
 .empty-state { color: var(--muted); text-align: center; padding: 30px 10px; font-size: 14px; }
@@ -785,3 +785,16 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
 .res-amago { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
 .res-amago button { padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font-size: 13px; cursor: pointer; }
 .res-amago button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* PC: sin marcador de tiros/goles y sin línea de atajos (los atajos siguen funcionando) */
+@media (min-width: 900px) {
+  .reg-score { display: none !important; }
+  .kbd-help { display: none !important; }
+}
+
+/* PC: sin botón FUERA (10) y portería pegada a la línea del campo */
+@media (min-width: 900px) {
+  .out-chip { display: none !important; }
+  .field .goal-wrap { padding-bottom: 0; gap: 0; }
+  .field .court-wrap { margin-top: -6px; }
+}

@@ -12,8 +12,11 @@ const ACCIONES_AMAGO = ["1 AMAGO", "2 AMAGO", "3 AMAGO", "4 AMAGO"];        // s
 const RESULTADOS = ["GOL", "PARADA", "FUERA"];
 // En el Sheets, DESTINO_HORIZONTAL guarda la altura y DESTINO_VERTICAL el lado.
 // Se mantienen esos nombres de columna para no romper los datos existentes.
-const ALTURA = { 1: "ARRIBA", 2: "ARRIBA", 3: "ARRIBA", 4: "MEDIO", 5: "MEDIO", 6: "MEDIO", 7: "ABAJO", 8: "ABAJO", 9: "ABAJO", 10: "FUERA" };
-const LADO = { 1: "IZQUIERDA", 4: "IZQUIERDA", 7: "IZQUIERDA", 2: "CENTRO", 5: "CENTRO", 8: "CENTRO", 3: "DERECHA", 6: "DERECHA", 9: "DERECHA", 10: "FUERA" };
+const ALTURA = { 1: "ARRIBA", 2: "ARRIBA", 3: "ARRIBA", 4: "MEDIO", 5: "MEDIO", 6: "MEDIO", 7: "ABAJO", 8: "ABAJO", 9: "ABAJO", 10: "FUERA", VAS: "ARRIBA", RIZ: "ABAJO", RDE: "ABAJO" };
+const LADO = { 1: "IZQUIERDA", 4: "IZQUIERDA", 7: "IZQUIERDA", 2: "CENTRO", 5: "CENTRO", 8: "CENTRO", 3: "DERECHA", 6: "DERECHA", 9: "DERECHA", 10: "FUERA", VAS: "CENTRO", RIZ: "IZQUIERDA", RDE: "DERECHA" };
+// Vaselina (VAS), rosca izquierda (RIZ) y rosca derecha (RDE): casillas fuera de la cuadrícula
+const EXT_DEST = ["VAS", "RIZ", "RDE"];
+const EXT_POS = { VAS: [60, -40, 210, 52], RIZ: [-50, 163, 56, 67], RDE: [318, 163, 56, 67] };
 const SHEET_COLS = ["EQUIPO", "NUMERO", "JUGADOR", "CONTRARIO", "ZONA TIRO", "DESTINO TIRO", "ACCION TIRO", "Resultado", "DESTINO_HORIZONTAL", "DESTINO_VERTICAL", "ID"];
 const PALETTE = ["#3b82f6", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#84cc16", "#06b6d4", "#64748b"];
 const HIST_PAGE = 150;
@@ -460,8 +463,9 @@ function courtSVG(opts) {
 // Dibujo: portería
 // ================================================================
 const GX = 29, GY = 29, GW = 272, GH = 201;
-function goalFrame(inner, id) {
-  return `<svg viewBox="0 0 330 232" xmlns="http://www.w3.org/2000/svg">
+function goalFrame(inner, id, ext = false) {
+  const vb = ext ? "-54 -44 440 304" : "0 0 330 232";
+  return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <pattern id="net-${id}" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M12 0H0V12" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/></pattern>
     </defs>
@@ -473,6 +477,55 @@ function goalFrame(inner, id) {
       <path d="M22 232 V22 H308 V232" stroke="#e5484d" stroke-dasharray="18 18" stroke-linejoin="round"/>
     </g>
   </svg>`;
+}
+function extBoxesSVG({ cells, total, destMode, maxV, select, selected }) {
+  let s = "";
+  // En móvil las roscas son más altas y su texto va girado 90 grados
+  // Solo en la página Registro (móvil): roscas altas y texto girado
+  const mob = select && window.matchMedia("(max-width: 899px)").matches;
+  for (const k of EXT_DEST) {
+    const [x, y, w, h] = (mob && k !== "VAS") ? [EXT_POS[k][0], 110, EXT_POS[k][2], 120] : EXT_POS[k];
+    const cx = x + w / 2, cy = y + h / 2;
+    const c = cells[k] || { g: 0, t: 0 };
+    const name = k === "VAS" ? "VASELINA" : k === "RIZ" ? "ROSCA IZ" : "ROSCA DER";
+    if (select) {
+      // Registro: roscas neutras; vaselina naranja en PC y neutra en móvil
+      const fill = (k === "VAS" && !mob) ? "rgba(251,146,60,.55)" : "rgba(255,255,255,.06)";
+      const on = selected === k;
+      s += `<rect class="gcell gext" data-dest="${k}" x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${fill}" stroke="${on ? "#fff" : "rgba(255,255,255,.35)"}" stroke-width="${on ? 3 : 1.5}"/>`;
+      const lines = k === "VAS" ? ["VASELINA"] : ["ROSCA", k === "RIZ" ? "IZQ" : "DER"];
+      if (mob && k !== "VAS") {
+        s += lines.map((l, i) => { const lx = cx + (i - (lines.length - 1) / 2) * 12; return `<text class="gnum" x="${lx}" y="${cy}" transform="rotate(-90 ${lx} ${cy})" text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="700" pointer-events="none">${l}</text>`; }).join("");
+      } else {
+        s += lines.map((l, i) => `<text class="gnum" x="${cx}" y="${cy + (i - (lines.length - 1) / 2) * 13 + 4}" text-anchor="middle" font-size="${mob ? 8 : 10}" font-weight="700" pointer-events="none">${l}</text>`).join("");
+      }
+      continue;
+    }
+    if (!c.t) {
+      s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.25)" stroke-width="1"/>`;
+      continue;
+    }
+    const v = destMode === "ef" ? (c.t ? c.g / c.t : 0) : c.t;
+    const a = 0.18 + 0.72 * (v / maxV);
+    const fill = k === "VAS" ? "rgba(255,255,255,.06)" : destMode === "ef" ? efColor(v, 0.75) : `rgba(16,185,129,${a.toFixed(2)})`;
+    const main = destMode === "pct" ? fmtPct(c.t, total, 1) : destMode === "gt" ? `${c.g}/${c.t}` : fmtPct(c.g, c.t);
+    const sub = destMode === "pct" ? `${c.t} tiros` : destMode === "gt" ? fmtPct(c.g, c.t) + " ef." : `${c.g}/${c.t}`;
+    s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${fill}" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>`;
+    if (k === "VAS") {
+      // Vaselina alargada: mismo formato que las roscas (etiqueta, valor, dato)
+      s += `<text class="gsub" x="${cx}" y="${y + 12}" text-anchor="middle" font-size="7" font-weight="700">VASELINA</text>`;
+      s += `<text class="gval" x="${cx}" y="${cy + 8}" text-anchor="middle" font-size="11">${main}</text>`;
+      s += `<text class="gsub" x="${cx}" y="${y + h - 6}" text-anchor="middle" font-size="7">${sub}</text>`;
+    } else {
+      const top = ["ROSCA", k === "RIZ" ? "IZ" : "DER"];
+      {
+        s += top.map((l, i) => `<text class="gsub" x="${cx}" y="${cy - 24 + i * 11}" text-anchor="middle" font-size="9" font-weight="700">${l}</text>`).join("");
+        s += `<text class="gval" x="${cx}" y="${cy + 8}" text-anchor="middle" font-size="15">${main}</text>`;
+        s += `<text class="gsub" x="${cx}" y="${cy + 24}" text-anchor="middle" font-size="9">${sub}</text>`;
+      }
+    }
+  }
+  return s;
 }
 function goalGridSVG({ mode, selected, cells = {}, total = 0, destMode = "pct", id }) {
   const cw = GW / 3, ch = GH / 3;
@@ -496,10 +549,12 @@ function goalGridSVG({ mode, selected, cells = {}, total = 0, destMode = "pct", 
       s += `<text class="gsub" x="${x + cw / 2}" y="${y + ch / 2 + 20}" text-anchor="middle">${sub}</text>`;
     }
   }
+  const hasExt = mode === "select" || EXT_DEST.some((k) => (cells[k]?.t || 0) > 0);
+  s += extBoxesSVG({ cells, total, destMode, maxV, select: mode === "select", selected });
   s += `<g stroke="rgba(255,255,255,.85)" stroke-width="2" pointer-events="none">
     <line x1="${GX + cw}" y1="${GY}" x2="${GX + cw}" y2="${GY + GH}"/><line x1="${GX + 2 * cw}" y1="${GY}" x2="${GX + 2 * cw}" y2="${GY + GH}"/>
     <line x1="${GX}" y1="${GY + ch}" x2="${GX + GW}" y2="${GY + ch}"/><line x1="${GX}" y1="${GY + 2 * ch}" x2="${GX + GW}" y2="${GY + 2 * ch}"/></g>`;
-  return goalFrame(s, id);
+  return goalFrame(s, id, hasExt);
 }
 function goalBandsSVG({ parts, counts, vertical, id, mode = "pct" }) {
   const n = parts.length;
@@ -903,8 +958,7 @@ function renderTendencias() {
   for (const [d, rs] of groupBy(rows, (r) => r.destino)) { const c = count(rs); cells[d] = { g: c.g, t: c.t }; }
   const out10 = cells["10"]?.t || 0;
   $("#destHint").textContent = state.destMode === "pct" ? "% sobre el total" : state.destMode === "gt" ? "goles / tiros" : "goles / tiros a cada zona";
-  $("#trendGoal").innerHTML = goalGridSVG({ mode: "stats", cells, total: rows.length, destMode: state.destMode, id: "dest" }) +
-    `<div class="goal-total">Total: ${rows.length}${out10 ? ` · fuera de portería (10): ${out10}` : ""}</div>`;
+  $("#trendGoal").innerHTML = goalGridSVG({ mode: "stats", cells, total: rows.length, destMode: state.destMode, id: "dest" });
   $$("#destMode button").forEach((b) => b.classList.toggle("active", b.dataset.mode === state.destMode));
 
   // Listado detallado de lanzamientos que cumplen los filtros (más reciente arriba)
@@ -1020,7 +1074,7 @@ function latStage(key) {
   const tot = lateral.length;
   const cells = {};
   cellRows.forEach((r) => {
-    if (["1","2","3","4","5","6","7","8","9"].includes(r.destino)) {
+    if (["1","2","3","4","5","6","7","8","9", ...EXT_DEST].includes(r.destino)) {
       const c = cells[r.destino] || (cells[r.destino] = [0, 0]);
       c[1]++; if (r.resultado === "GOL") c[0]++;
     }
@@ -1053,6 +1107,25 @@ function latStage(key) {
       const src = [[0,0],[LAT_TW,0],[LAT_TW,LAT_TH],[0,LAT_TH]];
       boxes += `<div class="cellbox" style="transform:${cssPerspective(src, poly)}"><span>${a}</span><span>${b}</span></div>`;
     }
+  }
+  // Vaselina y roscas: casillas fuera del marco, en su sitio según el lateral
+  for (const k of EXT_DEST) {
+    const [g, t] = cells[k] || [0, 0];
+    if (!t) continue;
+    let u0, u1, v0, v1;
+    if (k === "VAS") { [u0, u1, v0, v1] = [0.08, 0.92, -0.42, -0.06]; }
+    else {
+      const left = k === "RIZ";
+      [u0, u1] = (left !== cfg.mirror) ? [-0.42, -0.06] : [1.06, 1.42];
+      [v0, v1] = [2 / 3, 1];
+    }
+    const poly = [latBil(q, u0, v0), latBil(q, u1, v0), latBil(q, u1, v1), latBil(q, u0, v1)];
+    const a = (latMode === "pct" ? 40 + 170 * (t / tmax) : 0);
+    const fillc = latMode === "pct" ? `rgba(16,185,129,${(a / 255).toFixed(2)})` : `rgba(${efColorRGB(g / t).join(",")},0.6)`;
+    svg += `<polygon points="${poly.map((p) => p.map((n) => n.toFixed(1)).join(",")).join(" ")}" fill="${fillc}" stroke="rgba(255,255,255,.8)" stroke-width="1.5"/>`;
+    const [a1, b1] = fmt(g, t, latMode === "pct" ? ctot : 0);
+    const src = [[0, 0], [LAT_TW, 0], [LAT_TW, LAT_TH], [0, LAT_TH]];
+    boxes += `<div class="cellbox" style="transform:${cssPerspective(src, poly)}"><span>${a1}</span><span>${b1}</span></div>`;
   }
   const zones = cfg.labels.map(([x, y, z]) => {
     const zr = inZone(z), g = zr.filter((r) => r.resultado === "GOL").length, t = zr.length;
@@ -1148,7 +1221,7 @@ function resModalHTML(kind, key, team) {
   let base = isPen ? player.filter((r) => r.zona === "PENALTI") : player.filter((r) => r.zona !== "PENALTI");
   if (isPen && resAmago !== "TODOS") base = base.filter((r) => r.accion === resAmago);
   const cells = {};
-  for (const [d, rs] of groupBy(base.filter((r) => ["1","2","3","4","5","6","7","8","9"].includes(r.destino)), (r) => r.destino)) {
+  for (const [d, rs] of groupBy(base.filter((r) => ["1","2","3","4","5","6","7","8","9", ...EXT_DEST].includes(r.destino)), (r) => r.destino)) {
     const c = count(rs); cells[d] = { g: c.g, t: c.t };
   }
   const goal = goalGridSVG({ mode: "stats", cells, total: base.length, destMode: resMode, id: "res" });
