@@ -483,6 +483,7 @@ function extBoxesSVG({ cells, total, destMode, maxV, select, selected }) {
   // En móvil las roscas son más altas y su texto va girado 90 grados
   // Solo en la página Registro (móvil): roscas altas y texto girado
   const mob = select && window.matchMedia("(max-width: 899px)").matches;
+  const mobV = window.matchMedia("(max-width: 899px)").matches;
   for (const k of EXT_DEST) {
     const [x, y, w, h] = (mob && k !== "VAS") ? [EXT_POS[k][0], 110, EXT_POS[k][2], 120] : EXT_POS[k];
     const cx = x + w / 2, cy = y + h / 2;
@@ -495,7 +496,7 @@ function extBoxesSVG({ cells, total, destMode, maxV, select, selected }) {
       s += `<rect class="gcell gext" data-dest="${k}" x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${fill}" stroke="${on ? "#fff" : "rgba(255,255,255,.35)"}" stroke-width="${on ? 3 : 1.5}"/>`;
       const lines = k === "VAS" ? ["VASELINA"] : ["ROSCA", k === "RIZ" ? "IZQ" : "DER"];
       if (mob && k !== "VAS") {
-        s += lines.map((l, i) => { const lx = cx + (i - (lines.length - 1) / 2) * 12; return `<text class="gnum" x="${lx}" y="${cy}" transform="rotate(-90 ${lx} ${cy})" text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="700" pointer-events="none">${l}</text>`; }).join("");
+        s += lines.map((l, i) => { const lx = cx + (i - (lines.length - 1) / 2) * 16; return `<text class="gnum" x="${lx}" y="${cy}" transform="rotate(-90 ${lx} ${cy})" text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="700" pointer-events="none">${l}</text>`; }).join("");
       } else {
         s += lines.map((l, i) => `<text class="gnum" x="${cx}" y="${cy + (i - (lines.length - 1) / 2) * 13 + 4}" text-anchor="middle" font-size="${mob ? 8 : 10}" font-weight="700" pointer-events="none">${l}</text>`).join("");
       }
@@ -503,6 +504,11 @@ function extBoxesSVG({ cells, total, destMode, maxV, select, selected }) {
     }
     if (!c.t) {
       s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.25)" stroke-width="1"/>`;
+      // Vacía: mismo formato de tres líneas que cuando tiene tiros
+      const lab = k === "VAS" ? [[y + 12, "VASELINA"]] : [[cy - 26, "ROSCA"], [cy - 12, k === "RIZ" ? "IZ" : "DER"]];
+      s += lab.map(([yy, t]) => `<text class="gsub" x="${cx}" y="${yy}" text-anchor="middle" font-size="${mobV ? 12 : 9}" font-weight="700">${t}</text>`).join("");
+      s += `<text class="gval" x="${cx}" y="${cy + 8}" text-anchor="middle" font-size="${mobV ? 18 : 15}">–</text>`;
+      s += `<text class="gsub" x="${cx}" y="${k === "VAS" ? y + h - 6 : cy + 24}" text-anchor="middle" font-size="${mobV ? 11 : 9}">0 tiros</text>`;
       continue;
     }
     const v = destMode === "ef" ? (c.t ? c.g / c.t : 0) : c.t;
@@ -511,18 +517,18 @@ function extBoxesSVG({ cells, total, destMode, maxV, select, selected }) {
     const main = destMode === "pct" ? fmtPct(c.t, total, 1) : destMode === "gt" ? `${c.g}/${c.t}` : fmtPct(c.g, c.t);
     const sub = destMode === "pct" ? `${c.t} tiros` : destMode === "gt" ? fmtPct(c.g, c.t) + " ef." : `${c.g}/${c.t}`;
     s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${fill}" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>`;
+    // Tamaños: PC como están; en móvil más grandes para que se lean en el mapa pequeño
+    const fL = mobV ? 12 : 9, fLv = mobV ? 10 : 7, fV = mobV ? 18 : 15, fVv = mobV ? 16 : 11, fS = mobV ? 11 : 9, fSv = mobV ? 10 : 7;
     if (k === "VAS") {
       // Vaselina alargada: mismo formato que las roscas (etiqueta, valor, dato)
-      s += `<text class="gsub" x="${cx}" y="${y + 12}" text-anchor="middle" font-size="7" font-weight="700">VASELINA</text>`;
-      s += `<text class="gval" x="${cx}" y="${cy + 8}" text-anchor="middle" font-size="11">${main}</text>`;
-      s += `<text class="gsub" x="${cx}" y="${y + h - 6}" text-anchor="middle" font-size="7">${sub}</text>`;
+      s += `<text class="gsub" x="${cx}" y="${y + 12}" text-anchor="middle" font-size="${fLv}" font-weight="700">VASELINA</text>`;
+      s += `<text class="gval" x="${cx}" y="${cy + 8}" text-anchor="middle" font-size="${fVv}">${main}</text>`;
+      s += `<text class="gsub" x="${cx}" y="${y + h - 6}" text-anchor="middle" font-size="${fSv}">${sub}</text>`;
     } else {
       const top = ["ROSCA", k === "RIZ" ? "IZ" : "DER"];
-      {
-        s += top.map((l, i) => `<text class="gsub" x="${cx}" y="${cy - 24 + i * 11}" text-anchor="middle" font-size="9" font-weight="700">${l}</text>`).join("");
-        s += `<text class="gval" x="${cx}" y="${cy + 8}" text-anchor="middle" font-size="15">${main}</text>`;
-        s += `<text class="gsub" x="${cx}" y="${cy + 24}" text-anchor="middle" font-size="9">${sub}</text>`;
-      }
+      s += top.map((l, i) => `<text class="gsub" x="${cx}" y="${cy - 24 + i * (mobV ? 14 : 11)}" text-anchor="middle" font-size="${fL}" font-weight="700">${l}</text>`).join("");
+      s += `<text class="gval" x="${cx}" y="${cy + 8}" text-anchor="middle" font-size="${fV}">${main}</text>`;
+      s += `<text class="gsub" x="${cx}" y="${cy + 24}" text-anchor="middle" font-size="${fS}">${sub}</text>`;
     }
   }
   return s;
@@ -549,12 +555,11 @@ function goalGridSVG({ mode, selected, cells = {}, total = 0, destMode = "pct", 
       s += `<text class="gsub" x="${x + cw / 2}" y="${y + ch / 2 + 20}" text-anchor="middle">${sub}</text>`;
     }
   }
-  const hasExt = mode === "select" || EXT_DEST.some((k) => (cells[k]?.t || 0) > 0);
   s += extBoxesSVG({ cells, total, destMode, maxV, select: mode === "select", selected });
   s += `<g stroke="rgba(255,255,255,.85)" stroke-width="2" pointer-events="none">
     <line x1="${GX + cw}" y1="${GY}" x2="${GX + cw}" y2="${GY + GH}"/><line x1="${GX + 2 * cw}" y1="${GY}" x2="${GX + 2 * cw}" y2="${GY + GH}"/>
     <line x1="${GX}" y1="${GY + ch}" x2="${GX + GW}" y2="${GY + ch}"/><line x1="${GX}" y1="${GY + 2 * ch}" x2="${GX + GW}" y2="${GY + 2 * ch}"/></g>`;
-  return goalFrame(s, id, hasExt);
+  return goalFrame(s, id, true);
 }
 function goalBandsSVG({ parts, counts, vertical, id, mode = "pct" }) {
   const n = parts.length;
@@ -1064,6 +1069,8 @@ function latRows() {
     (!f.jugador || pkey(r) === f.jugador) &&
     (!f.accion || r.accion === f.accion));
 }
+function extSize(k) { return k === "VAS" ? [200, 90] : [110, 150]; }
+function extLabel(k) { return k === "VAS" ? "VASELINA" : k === "RIZ" ? "ROSCA IZ" : "ROSCA DER"; }
 function latStage(key) {
   const cfg = LAT[key];
   const rows = latRows();
@@ -1111,13 +1118,24 @@ function latStage(key) {
   // Vaselina y roscas: casillas fuera del marco, en su sitio según el lateral
   for (const k of EXT_DEST) {
     const [g, t] = cells[k] || [0, 0];
-    if (!t) continue;
+    if (!t) {
+      // Sin tiros: solo se marca el contorno para ver dónde está
+      let u0, u1, v0, v1;
+      if (k === "VAS") { [u0, u1, v0, v1] = [0.08, 0.92, -0.42, -0.06]; }
+      else { const left = k === "RIZ"; [u0, u1] = (left !== cfg.mirror) ? [-0.55, -0.08] : [1.08, 1.55]; [v0, v1] = [0.45, 1.0]; }
+      const p = [latBil(q, u0, v0), latBil(q, u1, v0), latBil(q, u1, v1), latBil(q, u0, v1)];
+      svg += `<polygon points="${p.map((pt) => pt.map((n) => n.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1"/>`;
+      const [ew, eh] = extSize(k), srcE = [[0, 0], [ew, 0], [ew, eh], [0, eh]];
+      const [a0, b0] = fmt(0, 0, latMode === "pct" ? ctot : 0);   // mismo formato que las casillas con datos
+      boxes += `<div class="cellbox" style="width:${ew}px;height:${eh}px;transform:${cssPerspective(srcE, p)}"><span class="xl">${extLabel(k)}</span><span>${a0}</span><span>${b0}</span></div>`;
+      continue;
+    }
     let u0, u1, v0, v1;
     if (k === "VAS") { [u0, u1, v0, v1] = [0.08, 0.92, -0.42, -0.06]; }
     else {
       const left = k === "RIZ";
-      [u0, u1] = (left !== cfg.mirror) ? [-0.42, -0.06] : [1.06, 1.42];
-      [v0, v1] = [2 / 3, 1];
+      [u0, u1] = (left !== cfg.mirror) ? [-0.55, -0.08] : [1.08, 1.55];
+      [v0, v1] = [0.45, 1.0];
     }
     const poly = [latBil(q, u0, v0), latBil(q, u1, v0), latBil(q, u1, v1), latBil(q, u0, v1)];
     const a = (latMode === "pct" ? 40 + 170 * (t / tmax) : 0);
@@ -1125,7 +1143,8 @@ function latStage(key) {
     svg += `<polygon points="${poly.map((p) => p.map((n) => n.toFixed(1)).join(",")).join(" ")}" fill="${fillc}" stroke="rgba(255,255,255,.8)" stroke-width="1.5"/>`;
     const [a1, b1] = fmt(g, t, latMode === "pct" ? ctot : 0);
     const src = [[0, 0], [LAT_TW, 0], [LAT_TW, LAT_TH], [0, LAT_TH]];
-    boxes += `<div class="cellbox" style="transform:${cssPerspective(src, poly)}"><span>${a1}</span><span>${b1}</span></div>`;
+    const [ew, eh] = extSize(k), srcX = [[0, 0], [ew, 0], [ew, eh], [0, eh]];
+    boxes += `<div class="cellbox" style="width:${ew}px;height:${eh}px;transform:${cssPerspective(srcX, poly)}"><span class="xl">${extLabel(k)}</span><span>${a1}</span><span>${b1}</span></div>`;
   }
   const zones = cfg.labels.map(([x, y, z]) => {
     const zr = inZone(z), g = zr.filter((r) => r.resultado === "GOL").length, t = zr.length;

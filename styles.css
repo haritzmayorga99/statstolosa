@@ -798,3 +798,5 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
   .field .goal-wrap { padding-bottom: 0; gap: 0; }
   .field .court-wrap { margin-top: -6px; }
 }
+
+.cellbox .xl { font-size: 13px; font-weight: 700; letter-spacing: .3px; }
