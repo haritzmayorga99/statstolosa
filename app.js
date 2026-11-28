@@ -433,9 +433,9 @@ function courtSVG(opts) {
       const off = z === "SAQUE" || z === "POR" ? -6 : -10;
       // EXT DER: texto alineado al borde derecho de su zona para que no se salga de la pista
       const ax = z === "EXT DER" ? 392 : x, anc = z === "EXT DER" ? "end" : "middle";
-      labels += `<text class="zone-lbl" x="${ax}" y="${y + off}" text-anchor="${anc}" ${lstyle}>${z}</text>`;
-      labels += `<text class="zone-sub" x="${ax}" y="${y + off + 16}" text-anchor="${anc}" ${lstyle}>${s.g} / ${s.t}</text>`;
-      if (s.t && !["SAQUE", "POR", "PENALTI"].includes(z)) labels += `<text class="zone-ef" x="${ax}" y="${y + off + 30}" text-anchor="${anc}">${fmtPct(s.g, s.t)}</text>`;
+      labels += `<text class="zone-lbl" data-zona="${z}" x="${ax}" y="${y + off}" text-anchor="${anc}" ${lstyle}>${z}</text>`;
+      labels += `<text class="zone-sub" data-zona="${z}" x="${ax}" y="${y + off + 16}" text-anchor="${anc}" ${lstyle}>${s.g} / ${s.t}</text>`;
+      if (s.t && !["SAQUE", "POR", "PENALTI"].includes(z)) labels += `<text class="zone-ef" data-zona="${z}" x="${ax}" y="${y + off + 30}" text-anchor="${anc}">${fmtPct(s.g, s.t)}</text>`;
     }
   }
   const area6 = pathOf(arc(R6, 0, 180), true);
