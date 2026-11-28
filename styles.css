@@ -800,3 +800,18 @@ body[data-theme="dark"] .hist tr.pending td { color: #fbbf24; }
 }
 
 .cellbox .xl { font-size: 13px; font-weight: 700; letter-spacing: .3px; }
+
+/* Botón FALTA: 4 botones en una sola fila; más estrechos y con texto más pequeño */
+.res.falta { background: #64748b; }
+.result-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.res { white-space: nowrap; overflow: hidden; text-overflow: clip; padding-left: 2px; padding-right: 2px; }
+@media (max-width: 899px) {
+  .result-grid { gap: 5px; }
+  .res { font-size: 13px; letter-spacing: -.2px; min-height: 44px; }
+}
+@media (min-width: 900px) {
+  .res { font-size: 14px; }
+}
+
+/* FALTA: cuenta como tiro, no como gol; se identifica en listas */
+.badge.FALTA { background: #64748b; }
