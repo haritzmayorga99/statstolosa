@@ -1196,7 +1196,7 @@ function bindLaterales() {
 // Resumen (protegida con contraseña; quitar RES_PASS cuando esté pulido)
 // ================================================================
 const RES_PASS = "1";
-let resUnlocked = false, resMode = "pct", resAmago = "TODOS", resPopup = null;
+let resUnlocked = false, resMode = "pct", resAmago = "TODOS", resPopup = null, resZone = "";
 
 function resTopPlayers(rows, filter, n = 3) {
   const map = new Map();
@@ -1239,22 +1239,25 @@ function resModalHTML(kind, key, team) {
   const isPen = kind === "pen";
   let base = isPen ? player.filter((r) => r.zona === "PENALTI") : player.filter((r) => r.zona !== "PENALTI");
   if (isPen && resAmago !== "TODOS") base = base.filter((r) => r.accion === resAmago);
+  const allBase = base;
+  if (!isPen && resZone) base = base.filter((r) => r.zona === resZone);
   const cells = {};
   for (const [d, rs] of groupBy(base.filter((r) => ["1","2","3","4","5","6","7","8","9", ...EXT_DEST].includes(r.destino)), (r) => r.destino)) {
     const c = count(rs); cells[d] = { g: c.g, t: c.t };
   }
   const goal = goalGridSVG({ mode: "stats", cells, total: base.length, destMode: resMode, id: "res" });
   const zstats = {};
-  for (const [z, rs] of groupBy(base, (r) => r.zona)) { const c = count(rs); zstats[z] = { g: c.g, t: c.t }; }
+  for (const [z, rs] of groupBy(allBase, (r) => r.zona)) { const c = count(rs); zstats[z] = { g: c.g, t: c.t }; }
   const seg = `<div class="seg" id="resModeSeg"><button data-mode="pct" ${resMode==="pct"?'class="active"':""}>% tiros</button><button data-mode="gt" ${resMode==="gt"?'class="active"':""}>Gol / Tiro</button><button data-mode="ef" ${resMode==="ef"?'class="active"':""}>% eficacia</button></div>`;
   const amagos = isPen ? `<div class="res-amago" id="resAmagoSeg">${["TODOS","1 AMAGO","2 AMAGO","3 AMAGO","4 AMAGO"].map((a) => `<button data-amago="${a}" class="${resAmago===a?"active":""}">${a}</button>`).join("")}</div>` : "";
-  const court = isPen ? "" : `<div class="court-wrap" style="margin-top:14px">${courtSVG({ mode: "stats", selected: "", stats: zstats })}</div>`;
+  const court = isPen ? "" : `<div class="court-wrap" style="margin-top:14px">${courtSVG({ mode: "stats", selected: resZone, stats: zstats })}</div>`;
   return { title: `#${numero} ${base[0]?.jugador || player[0]?.jugador || ""} · ${isPen ? "Penaltis" : "Máximo lanzador"}`,
     body: `${seg}${amagos}<div style="margin-top:10px">${goal}<div class="goal-total">Total: ${base.length}</div></div>${court}` };
 }
 function openResModal(kind, key) {
   resPopup = { kind, key, team: $("#resTeam").value };
   if (kind === "pen") resAmago = "TODOS";
+  resZone = "";
   paintResModal();
   $("#resModal").hidden = false;
 }
@@ -1278,6 +1281,8 @@ function bindResumen() {
   });
   $("#resModal").addEventListener("click", (e) => {
     if (e.target.id === "resModal" || e.target.closest("#resClose")) { $("#resModal").hidden = true; resPopup = null; return; }
+    const zc = e.target.closest("#resModalBody [data-zona]");
+    if (zc && resPopup && resPopup.kind === "max") { resZone = resZone === zc.dataset.zona ? "" : zc.dataset.zona; paintResModal(); return; }
     const m = e.target.closest("#resModeSeg [data-mode]");
     if (m) { resMode = m.dataset.mode; paintResModal(); return; }
     const a = e.target.closest("[data-amago]");
